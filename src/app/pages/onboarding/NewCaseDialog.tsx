@@ -17,6 +17,7 @@ import {
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { clientApi, userApi, onboardingApi, fetchJson } from '@/utils/authFetch';
 
 interface Client {
 	_id: string;
@@ -74,8 +75,8 @@ function NewCaseDialog({ open, onClose, onSuccess }: NewCaseDialogProps) {
 
 	const fetchClients = async () => {
 		try {
-			const response = await fetch('http://localhost:5000/api/clients');
-			const data = await response.json();
+			const response = await clientApi.getAll();
+			const data = await fetchJson(response);
 			if (data.success) {
 				setClients(data.data);
 			}
@@ -86,10 +87,16 @@ function NewCaseDialog({ open, onClose, onSuccess }: NewCaseDialogProps) {
 
 	const fetchChampions = async () => {
 		try {
-			const response = await fetch('http://localhost:5000/api/users?role=Champion,Senior Champion,Admin');
-			const data = await response.json();
+			// Note: We might need to add a filter method to userApi for role filtering
+			const response = await userApi.getAll();
+			const data = await fetchJson(response);
 			if (data.success) {
-				setChampions(data.data);
+				// Filter champions on the client side for now
+				const championRoles = ['Champion', 'Senior Champion', 'Admin'];
+				const filteredChampions = data.data.filter((user: User) => 
+					championRoles.includes(user.role)
+				);
+				setChampions(filteredChampions);
 			}
 		} catch (error) {
 			console.error('Error fetching champions:', error);
@@ -114,15 +121,8 @@ function NewCaseDialog({ open, onClose, onSuccess }: NewCaseDialogProps) {
 				expectedCompletionDate: formData.expectedCompletionDate?.toISOString() || null
 			};
 
-			const response = await fetch('http://localhost:5000/api/onboarding-cases', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify(payload)
-			});
-
-			const data = await response.json();
+			const response = await onboardingApi.create(payload);
+			const data = await fetchJson(response);
 
 			if (data.success) {
 				onSuccess();

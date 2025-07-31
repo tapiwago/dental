@@ -29,6 +29,22 @@ const navigationConfig: FuseNavItemType[] = [
 		url: 'onboarding'
 	},
 	{
+		id: 'clients',
+		title: 'Clients',
+		translate: 'CLIENTS',
+		type: 'item',
+		icon: 'heroicons-outline:office-building',
+		url: 'clients'
+	},
+	{
+		id: 'users',
+		title: 'Users',
+		translate: 'USERS',
+		type: 'item',
+		icon: 'heroicons-outline:users',
+		url: 'users'
+	},
+	{
 		id: 'example-component',
 		title: 'Example',
 		translate: 'EXAMPLE',

@@ -11,7 +11,7 @@ import Link from '@fuse/core/Link';
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
 import useJwtAuth from '../useJwtAuth';
-import { AuthFetchError } from '@/utils/authFetch';
+import { FetchApiError } from '@/utils/apiFetch';
 
 /**
  * Form Validation Schema
@@ -62,11 +62,11 @@ function JwtSignInForm() {
 		.then(() => {
 			console.log('JwtSignInForm: Sign in successful!');
 		})
-		.catch((error: AuthFetchError) => {
+		.catch((error: FetchApiError) => {
 			console.error('Sign in error:', error);
 			
 			// Handle different types of errors
-			if (error instanceof AuthFetchError) {
+			if (error instanceof FetchApiError) {
 				const errorData = error.data as {
 					success: boolean;
 					error: string;

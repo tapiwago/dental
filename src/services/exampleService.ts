@@ -3,7 +3,7 @@
  * This file shows common patterns for making authenticated API calls
  */
 
-import { authGet, authPost, authPut, authDelete, AuthFetchError } from '@/utils/authFetch';
+import { authGet, authPost, authPut, authDelete, FetchApiError } from '@/utils/apiFetch';
 
 // Type for API error response
 interface ApiErrorResponse {
@@ -19,7 +19,7 @@ export const userService = {
       const response = await authGet('/api/users/profile', { requireAuth: true });
       return await response.json();
     } catch (error) {
-      if (error instanceof AuthFetchError) {
+      if (error instanceof FetchApiError) {
         if (error.isAuthError) {
           // Handle authentication errors (401/403)
           console.error('Authentication error:', error.data);
@@ -41,7 +41,7 @@ export const userService = {
       const response = await authPut('/api/users/profile', userData, { requireAuth: true });
       return await response.json();
     } catch (error) {
-      if (error instanceof AuthFetchError) {
+      if (error instanceof FetchApiError) {
         const errorData = error.data as ApiErrorResponse;
         console.error('Failed to update profile:', errorData);
         throw new Error(errorData?.error || 'Failed to update profile');
@@ -56,7 +56,7 @@ export const userService = {
       const response = await authGet('/api/users', { requireAuth: true });
       return await response.json();
     } catch (error) {
-      if (error instanceof AuthFetchError) {
+      if (error instanceof FetchApiError) {
         const errorData = error.data as ApiErrorResponse;
         console.error('Failed to fetch users:', errorData);
         throw new Error(errorData?.error || 'Failed to fetch users');
@@ -71,7 +71,7 @@ export const userService = {
       const response = await authDelete(`/api/users/${userId}`, { requireAuth: true });
       return await response.json();
     } catch (error) {
-      if (error instanceof AuthFetchError) {
+      if (error instanceof FetchApiError) {
         const errorData = error.data as ApiErrorResponse;
         console.error('Failed to delete user:', errorData);
         throw new Error(errorData?.error || 'Failed to delete user');
@@ -89,7 +89,7 @@ export const publicService = {
       const response = await authGet('/api/public/data');
       return await response.json();
     } catch (error) {
-      if (error instanceof AuthFetchError) {
+      if (error instanceof FetchApiError) {
         const errorData = error.data as ApiErrorResponse;
         console.error('Failed to fetch public data:', errorData);
         throw new Error(errorData?.error || 'Failed to fetch public data');
@@ -104,7 +104,7 @@ export const publicService = {
       const response = await authPost('/api/public/contact', formData);
       return await response.json();
     } catch (error) {
-      if (error instanceof AuthFetchError) {
+      if (error instanceof FetchApiError) {
         const errorData = error.data as ApiErrorResponse;
         console.error('Failed to submit contact form:', errorData);
         throw new Error(errorData?.error || 'Failed to submit contact form');
@@ -126,7 +126,7 @@ export const handleApiResponse = async (responsePromise: Promise<Response>) => {
     
     return data;
   } catch (error) {
-    if (error instanceof AuthFetchError) {
+    if (error instanceof FetchApiError) {
       if (error.isAuthError) {
         // Handle authentication errors globally
         console.error('Authentication error, redirecting to login...');

@@ -1,5 +1,5 @@
 // Use the environment variable directly, with fallback to localhost:5000
-export const API_BASE_URL = 'http://localhost:5000';
+export const API_BASE_URL = (import.meta?.env?.VITE_API_BASE_URL as string) || 'http://localhost:5000';
 
 // Define the types for options and configuration
 type FetchOptions = RequestInit & {
@@ -67,7 +67,7 @@ const apiFetch = async (endpoint: string, options: FetchOptions = {}) => {
 	const method = restOptions.method || 'GET';
 	const fullUrl = `${API_BASE_URL}${endpoint}`;
 	
-	console.log(`ApiFetch ->>>>>: ${method} ${fullUrl}`);
+	console.log(`ApiFetch: ${method} ${fullUrl}`);
 	
 	// Check authentication requirement
 	if (requireAuth && !isAuthenticated()) {

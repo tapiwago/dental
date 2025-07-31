@@ -20,6 +20,7 @@ import {
 } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
 import NewCaseDialog from './NewCaseDialog';
+import { onboardingApi, fetchJson } from '@/utils/authFetch';
 
 interface OnboardingCase {
 	_id: string;
@@ -81,8 +82,8 @@ function Onboarding() {
 				...(priorityFilter && { priority: priorityFilter })
 			});
 
-			const response = await fetch(`http://localhost:5000/api/onboarding-cases?${params}`);
-			const data = await response.json();
+			const response = await onboardingApi.getAll(params);
+			const data = await fetchJson(response);
 
 			if (data.success) {
 				setCases(data.data);

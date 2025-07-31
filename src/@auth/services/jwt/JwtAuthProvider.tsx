@@ -3,7 +3,7 @@ import { FuseAuthProviderComponentProps, FuseAuthProviderState } from '@fuse/cor
 import useLocalStorage from '@fuse/hooks/useLocalStorage';
 import { authRefreshToken, authSignIn, authSignInWithToken, authSignUp, authUpdateDbUser } from '@auth/authApi';
 import { User } from '../../user';
-import { setAuthToken, removeAuthToken } from '@/utils/authFetch';
+import { setAuthToken, removeAuthToken } from '@/utils/apiFetch';
 import { isTokenValid } from './utils/jwtUtils';
 import JwtAuthContext from '@auth/services/jwt/JwtAuthContext';
 import { JwtAuthContextType } from '@auth/services/jwt/JwtAuthContext';

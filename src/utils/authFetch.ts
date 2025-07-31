@@ -32,9 +32,14 @@ export const removeAuthToken = () => {
   delete authHeaders.Authorization;
 };
 
-// Function to get current auth token
+// Function to get current auth token from localStorage
 export const getAuthToken = (): string | null => {
-  return authHeaders.Authorization?.replace('Bearer ', '') || null;
+  // First check the authHeaders, then fall back to localStorage
+  const headerToken = authHeaders.Authorization?.replace('Bearer ', '');
+  if (headerToken) return headerToken;
+  
+  // Fall back to localStorage
+  return localStorage.getItem('jwt_access_token');
 };
 
 // Function to update global auth headers
@@ -50,7 +55,7 @@ export const removeAuthHeaders = (headerKeys: string[]) => {
 
 // Check if user is authenticated
 export const isAuthenticated = (): boolean => {
-  return !!authHeaders.Authorization;
+  return !!getAuthToken();
 };
 
 // Enhanced authFetch function with authentication middleware
@@ -77,11 +82,15 @@ const authFetch = async (endpoint: string, options: AuthFetchOptions = {}) => {
     });
   }
   
+  // Get the current auth token
+  const currentToken = getAuthToken();
+  const authHeadersToUse = currentToken ? { Authorization: `Bearer ${currentToken}` } : {};
+  
   // Set default headers, including auth headers
   const config: RequestInit = {
     headers: {
       ...(method !== 'GET' && { 'Content-Type': 'application/json' }),
-      ...(skipGlobalHeaders ? {} : authHeaders),
+      ...(skipGlobalHeaders ? {} : { ...authHeaders, ...authHeadersToUse }),
       ...headers
     },
     ...restOptions
@@ -104,6 +113,8 @@ const authFetch = async (endpoint: string, options: AuthFetchOptions = {}) => {
       console.warn('AuthFetch: 401 Unauthorized - clearing auth token');
       // Clear auth token on 401
       removeAuthToken();
+      // Also clear from localStorage
+      localStorage.removeItem('jwt_access_token');
       // You might want to redirect to login here
       // window.location.href = '/sign-in';
     }
@@ -166,6 +177,61 @@ export const authPatch = (endpoint: string, data?: unknown, options: Omit<AuthFe
     method: 'PATCH',
     body: data ? JSON.stringify(data) : undefined
   });
+};
+
+// API service utilities for common patterns
+export const fetchJson = async (response: Response) => {
+  try {
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to parse JSON response:', error);
+    throw new AuthFetchError(response.status, { error: 'Invalid JSON response' });
+  }
+};
+
+export const handleApiResponse = async (response: Response) => {
+  const data = await fetchJson(response);
+  if (!response.ok) {
+    throw new AuthFetchError(response.status, data);
+  }
+  return data;
+};
+
+// Specific API endpoints for common operations
+export const userApi = {
+  getAll: () => authGet('/api/users', { requireAuth: true }),
+  getById: (id: string) => authGet(`/api/users/${id}`, { requireAuth: true }),
+  create: (userData: any) => authPost('/api/users/register', userData, { requireAuth: true }),
+  update: (id: string, userData: any) => authPut(`/api/users/${id}`, userData, { requireAuth: true }),
+  delete: (id: string) => authDelete(`/api/users/${id}`, { requireAuth: true })
+};
+
+export const clientApi = {
+  getAll: () => authGet('/api/clients', { requireAuth: true }),
+  getById: (id: string) => authGet(`/api/clients/${id}`, { requireAuth: true }),
+  create: (clientData: any) => authPost('/api/clients', clientData, { requireAuth: true }),
+  update: (id: string, clientData: any) => authPut(`/api/clients/${id}`, clientData, { requireAuth: true }),
+  delete: (id: string) => authDelete(`/api/clients/${id}`, { requireAuth: true })
+};
+
+export const onboardingApi = {
+  getAll: (params?: URLSearchParams) => {
+    const endpoint = params ? `/api/onboarding-cases?${params.toString()}` : '/api/onboarding-cases';
+    return authGet(endpoint, { requireAuth: true });
+  },
+  getById: (id: string) => authGet(`/api/onboarding-cases/${id}`, { requireAuth: true }),
+  create: (caseData: any) => authPost('/api/onboarding-cases', caseData, { requireAuth: true }),
+  update: (id: string, caseData: any) => authPut(`/api/onboarding-cases/${id}`, caseData, { requireAuth: true }),
+  delete: (id: string) => authDelete(`/api/onboarding-cases/${id}`, { requireAuth: true }),
+  updateStatus: (id: string, status: string) => authPut(`/api/onboarding-cases/${id}/status`, { status }, { requireAuth: true }),
+  getDashboard: () => authGet('/api/onboarding-cases/dashboard/summary', { requireAuth: true })
+};
+
+export const authApi = {
+  signin: (credentials: { firstName: string; password: string }) => 
+    authPost('/api/users/signin', credentials),
+  signinWithToken: () => authGet('/api/users/signin-with-token', { requireAuth: true }),
+  register: (userData: any) => authPost('/api/users/register', userData)
 };
 
 export default authFetch;
