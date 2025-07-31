@@ -29,6 +29,14 @@ const navigationConfig: FuseNavItemType[] = [
 		url: 'onboarding'
 	},
 	{
+		id: 'workflow-templates',
+		title: 'Workflow Templates',
+		translate: 'WORKFLOW_TEMPLATES',
+		type: 'item',
+		icon: 'heroicons-outline:template',
+		url: 'workflow-templates'
+	},
+	{
 		id: 'clients',
 		title: 'Clients',
 		translate: 'CLIENTS',

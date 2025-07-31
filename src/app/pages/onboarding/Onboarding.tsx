@@ -16,9 +16,11 @@ import {
 	FormControl,
 	InputLabel,
 	TablePagination,
-	CircularProgress
+	CircularProgress,
+	IconButton
 } from '@mui/material';
-import { Add as AddIcon } from '@mui/icons-material';
+import { Add as AddIcon, Visibility as ViewIcon } from '@mui/icons-material';
+import useNavigate from '@fuse/hooks/useNavigate';
 import NewCaseDialog from './NewCaseDialog';
 import { onboardingApi, fetchJson } from '@/utils/authFetch';
 
@@ -53,6 +55,7 @@ interface PaginationInfo {
 }
 
 function Onboarding() {
+	const navigate = useNavigate();
 	const [cases, setCases] = useState<OnboardingCase[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [showNewCaseDialog, setShowNewCaseDialog] = useState(false);
@@ -133,6 +136,10 @@ function Onboarding() {
 		fetchOnboardingCases(); // Refresh the list
 	};
 
+	const handleViewCase = (caseId: string) => {
+		navigate(`/onboarding/case/${caseId}`);
+	};
+
 	return (
 		<>
 			<div className="w-full">
@@ -172,10 +179,10 @@ function Onboarding() {
 							placeholder="Search cases..."
 							value={searchTerm}
 							onChange={(e) => setSearchTerm(e.target.value)}
-							className="min-w-150"
+							className="min-w-50"
 							size="small"
 						/>
-						<FormControl className="min-w-100" size="small">
+						<FormControl className="min-w-50" size="small">
 							<InputLabel>Status</InputLabel>
 							<Select
 								value={statusFilter}
@@ -190,7 +197,7 @@ function Onboarding() {
 								<MenuItem value="Cancelled">Cancelled</MenuItem>
 							</Select>
 						</FormControl>
-						<FormControl className="min-w-100" size="small">
+						<FormControl className="min-w-50" size="small">
 							<InputLabel>Priority</InputLabel>
 							<Select
 								value={priorityFilter}
@@ -229,18 +236,19 @@ function Onboarding() {
 										<TableCell>Champion</TableCell>
 										<TableCell>Start Date</TableCell>
 										<TableCell>Expected Completion</TableCell>
+										<TableCell>Actions</TableCell>
 									</TableRow>
 								</TableHead>
 								<TableBody>
 									{loading ? (
 										<TableRow>
-											<TableCell colSpan={8} align="center">
+											<TableCell colSpan={9} align="center">
 												<CircularProgress />
 											</TableCell>
 										</TableRow>
 									) : cases.length === 0 ? (
 										<TableRow>
-											<TableCell colSpan={8} align="center">
+											<TableCell colSpan={9} align="center">
 												<Typography color="text.secondary">
 													No onboarding cases found
 												</Typography>
@@ -308,6 +316,16 @@ function Onboarding() {
 															: 'Not set'
 														}
 													</Typography>
+												</TableCell>
+												<TableCell>
+													<IconButton 
+														size="small" 
+														onClick={() => handleViewCase(onboardingCase._id)}
+														color="primary"
+														title="View Case Details"
+													>
+														<ViewIcon />
+													</IconButton>
 												</TableCell>
 											</TableRow>
 										))

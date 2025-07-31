@@ -18,6 +18,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { clientApi, userApi, onboardingApi, fetchJson } from '@/utils/authFetch';
+import useUser from '@/@auth/useUser';
 
 interface Client {
 	_id: string;
@@ -26,7 +27,7 @@ interface Client {
 }
 
 interface User {
-	_id: string;
+	id: string;
 	firstName: string;
 	lastName: string;
 	email: string;
@@ -50,6 +51,7 @@ interface FormData {
 }
 
 function NewCaseDialog({ open, onClose, onSuccess }: NewCaseDialogProps) {
+	const { data: currentUser } = useUser();
 	const [formData, setFormData] = useState<FormData>({
 		caseId: '',
 		clientId: '',
@@ -64,12 +66,15 @@ function NewCaseDialog({ open, onClose, onSuccess }: NewCaseDialogProps) {
 	const [champions, setChampions] = useState<User[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState('');
+	const [retryCount, setRetryCount] = useState(0);
 
 	useEffect(() => {
 		if (open) {
 			fetchClients();
 			fetchChampions();
 			generateCaseId();
+			setError('');
+			setRetryCount(0);
 		}
 	}, [open]);
 
@@ -77,9 +82,7 @@ function NewCaseDialog({ open, onClose, onSuccess }: NewCaseDialogProps) {
 		try {
 			const response = await clientApi.getAll();
 			const data = await fetchJson(response);
-			if (data.success) {
-				setClients(data.data);
-			}
+			setClients(data || []);
 		} catch (error) {
 			console.error('Error fetching clients:', error);
 		}
@@ -87,26 +90,25 @@ function NewCaseDialog({ open, onClose, onSuccess }: NewCaseDialogProps) {
 
 	const fetchChampions = async () => {
 		try {
-			// Note: We might need to add a filter method to userApi for role filtering
 			const response = await userApi.getAll();
 			const data = await fetchJson(response);
-			if (data.success) {
-				// Filter champions on the client side for now
-				const championRoles = ['Champion', 'Senior Champion', 'Admin'];
-				const filteredChampions = data.data.filter((user: User) => 
-					championRoles.includes(user.role)
-				);
-				setChampions(filteredChampions);
-			}
+			// Filter champions on the client side for now
+			const championRoles = ['Champion', 'Senior Champion', 'Admin'];
+			const allUsers = data.users || [];
+			const filteredChampions = allUsers.filter((user: User) => 
+				championRoles.includes(user.role)
+			);
+			setChampions(filteredChampions);
 		} catch (error) {
 			console.error('Error fetching champions:', error);
 		}
 	};
 
 	const generateCaseId = () => {
-		const timestamp = Date.now().toString().slice(-6);
-		const randomNum = Math.floor(Math.random() * 100).toString().padStart(2, '0');
-		setFormData(prev => ({ ...prev, caseId: `OB-${timestamp}-${randomNum}` }));
+		const timestamp = Date.now();
+		const randomNum = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+		const dateStr = new Date().toISOString().slice(2, 10).replace(/-/g, ''); // YYMMDD format
+		setFormData(prev => ({ ...prev, caseId: `OB-${dateStr}-${randomNum}` }));
 	};
 
 	const handleSubmit = async (e: React.FormEvent) => {
@@ -114,38 +116,73 @@ function NewCaseDialog({ open, onClose, onSuccess }: NewCaseDialogProps) {
 		setError('');
 		setLoading(true);
 
-		try {
-			const payload = {
-				...formData,
-				startDate: formData.startDate.toISOString(),
-				expectedCompletionDate: formData.expectedCompletionDate?.toISOString() || null
-			};
+		const attemptSubmission = async (attempts = 0): Promise<void> => {
+			try {
+				// Validate required fields
+				if (!formData.caseId || !formData.clientId || !formData.assignedChampion || !formData.startDate) {
+					setError('Please fill in all required fields');
+					setLoading(false);
+					return;
+				}
 
-			const response = await onboardingApi.create(payload);
-			const data = await fetchJson(response);
+				if (!currentUser?.id && !currentUser?._id) {
+					setError('User authentication required. Please log in again.');
+					setLoading(false);
+					return;
+				}
 
-			if (data.success) {
-				onSuccess();
-				onClose();
-				// Reset form
-				setFormData({
-					caseId: '',
-					clientId: '',
-					assignedChampion: '',
-					priority: 'Medium',
-					startDate: new Date(),
-					expectedCompletionDate: null,
-					notes: ''
-				});
-			} else {
-				setError(data.error || 'Failed to create onboarding case');
+				const payload = {
+					...formData,
+					startDate: formData.startDate.toISOString(),
+					expectedCompletionDate: formData.expectedCompletionDate?.toISOString() || null,
+					createdBy: currentUser?.id || currentUser?._id
+				};
+
+				console.log('Creating onboarding case with payload:', payload);
+
+				const response = await onboardingApi.create(payload);
+				const data = await fetchJson(response);
+
+				if (data.success) {
+					onSuccess();
+					onClose();
+					// Reset form
+					setFormData({
+						caseId: '',
+						clientId: '',
+						assignedChampion: '',
+						priority: 'Medium',
+						startDate: new Date(),
+						expectedCompletionDate: null,
+						notes: ''
+					});
+					setRetryCount(0);
+				} else {
+					setError(data.error || 'Failed to create onboarding case');
+				}
+			} catch (error: any) {
+				console.error('Error creating case:', error);
+				
+				// Check for duplicate key error and retry with new case ID (max 3 attempts)
+				if (attempts < 3 && error.status === 400 && error.data?.error && error.data.error.includes('duplicate key error')) {
+					console.log(`Duplicate case ID detected (attempt ${attempts + 1}), generating new one and retrying...`);
+					generateCaseId();
+					// Wait a bit and retry
+					await new Promise(resolve => setTimeout(resolve, 100));
+					return attemptSubmission(attempts + 1);
+				}
+				
+				if (error.status === 400 && error.data?.error) {
+					setError(error.data.error);
+				} else {
+					setError('Network error. Please try again.');
+				}
+			} finally {
+				setLoading(false);
 			}
-		} catch (error) {
-			setError('Network error. Please try again.');
-			console.error('Error creating case:', error);
-		} finally {
-			setLoading(false);
-		}
+		};
+
+		await attemptSubmission();
 	};
 
 	const handleChange = (field: keyof FormData, value: any) => {
@@ -215,7 +252,7 @@ function NewCaseDialog({ open, onClose, onSuccess }: NewCaseDialogProps) {
 									label="Assigned Champion"
 								>
 									{champions.map((champion) => (
-										<MenuItem key={champion._id} value={champion._id}>
+										<MenuItem key={champion.id} value={champion.id}>
 											{champion.firstName} {champion.lastName} ({champion.role})
 										</MenuItem>
 									))}
@@ -233,6 +270,11 @@ function NewCaseDialog({ open, onClose, onSuccess }: NewCaseDialogProps) {
 											size: 'small',
 											className: 'flex-1',
 											required: true
+										},
+										popper: {
+											sx: {
+												zIndex: 9999
+											}
 										}
 									}}
 								/>
@@ -244,6 +286,11 @@ function NewCaseDialog({ open, onClose, onSuccess }: NewCaseDialogProps) {
 										textField: {
 											size: 'small',
 											className: 'flex-1'
+										},
+										popper: {
+											sx: {
+												zIndex: 9999
+											}
 										}
 									}}
 								/>

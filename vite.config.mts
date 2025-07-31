@@ -34,7 +34,13 @@ export default defineConfig({
 		host: '0.0.0.0',
 		open: true,
 		strictPort: false,
-		port: 3000
+		port: 3000,
+		hmr: {
+			overlay: true
+		},
+		watch: {
+			usePolling: true
+		}
 	},
 	define: {
 		'import.meta.env.VITE_PORT': JSON.stringify(process.env.PORT || 3000),
@@ -46,7 +52,6 @@ export default defineConfig({
 			'@fuse': '/src/@fuse',
 			'@history': '/src/@history',
 			'@lodash': '/src/@lodash',
-			'@mock-api': '/src/@mock-api',
 			'@schema': '/src/@schema',
 			'app/store': '/src/app/store',
 			'app/shared-components': '/src/app/shared-components',

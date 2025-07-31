@@ -161,10 +161,10 @@ function Clients() {
 							placeholder="Search clients..."
 							value={searchTerm}
 							onChange={(e) => setSearchTerm(e.target.value)}
-							className="min-w-150"
+							className="min-w-50"
 							size="small"
 						/>
-						<FormControl className="min-w-100" size="small">
+						<FormControl className="min-w-50" size="small">
 							<InputLabel>Status</InputLabel>
 							<Select
 								value={statusFilter}
@@ -178,7 +178,7 @@ function Clients() {
 								<MenuItem value="Churned">Churned</MenuItem>
 							</Select>
 						</FormControl>
-						<FormControl className="min-w-100" size="small">
+						<FormControl className="min-w-50" size="small">
 							<InputLabel>Priority</InputLabel>
 							<Select
 								value={priorityFilter}
@@ -192,7 +192,7 @@ function Clients() {
 								<MenuItem value="Critical">Critical</MenuItem>
 							</Select>
 						</FormControl>
-						<FormControl className="min-w-100" size="small">
+						<FormControl className="min-w-50" size="small">
 							<InputLabel>Industry</InputLabel>
 							<Select
 								value={industryFilter}

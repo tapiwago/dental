@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { userApi, fetchJson } from '@/utils/apiFetch';
 import {
   Typography,
   TextField,
@@ -85,20 +86,10 @@ export default function Users() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('jwt_access_token');
       
-      const response = await fetch('http://localhost:3001/api/users', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch users');
-      }
-
-      const data = await response.json();
+      const response = await userApi.getAll();
+      const data = await fetchJson(response);
+      
       setUsers(data.users || []);
       setError(null);
     } catch (err) {
@@ -145,16 +136,8 @@ export default function Users() {
 
   const handleDeleteUser = async (user: User) => {
     try {
-      const token = localStorage.getItem('jwt_access_token');
+      const response = await userApi.delete(user.id);
       
-      const response = await fetch(`http://localhost:3001/api/users/${user.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
       if (!response.ok) {
         throw new Error('Failed to delete user');
       }

@@ -227,6 +227,22 @@ export const onboardingApi = {
   getDashboard: () => authGet('/api/onboarding-cases/dashboard/summary', { requireAuth: true })
 };
 
+export const templateApi = {
+  getAll: (params?: URLSearchParams) => {
+    const endpoint = params ? `/api/templates?${params.toString()}` : '/api/templates';
+    return authGet(endpoint, { requireAuth: true });
+  },
+  getById: (id: string) => authGet(`/api/templates/${id}`, { requireAuth: true }),
+  create: (templateData: any) => authPost('/api/templates', templateData, { requireAuth: true }),
+  update: (id: string, templateData: any) => authPut(`/api/templates/${id}`, templateData, { requireAuth: true }),
+  delete: (id: string) => authDelete(`/api/templates/${id}`, { requireAuth: true }),
+  clone: (id: string, cloneData: any) => authPost(`/api/templates/${id}/clone`, cloneData, { requireAuth: true }),
+  publish: (id: string) => authPut(`/api/templates/${id}/publish`, {}, { requireAuth: true }),
+  setDefault: (id: string) => authPut(`/api/templates/${id}/set-default`, {}, { requireAuth: true }),
+  getRecommendations: () => authGet('/api/templates/recommendations', { requireAuth: true }),
+  updateUsage: (id: string) => authPut(`/api/templates/${id}/usage`, {}, { requireAuth: true })
+};
+
 export const authApi = {
   signin: (credentials: { firstName: string; password: string }) => 
     authPost('/api/users/signin', credentials),

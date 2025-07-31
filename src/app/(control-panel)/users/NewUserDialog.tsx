@@ -20,6 +20,7 @@ import {
   FormControlLabel
 } from '@mui/material';
 import { PersonAdd as PersonAddIcon } from '@mui/icons-material';
+import { userApi, fetchJson } from '@/utils/apiFetch';
 
 interface NewUserDialogProps {
   open: boolean;
@@ -119,7 +120,6 @@ export default function NewUserDialog({ open, onClose, onUserCreated }: NewUserD
 
     try {
       setLoading(true);
-      const token = localStorage.getItem('jwt_access_token');
 
       const userData = {
         firstName: formData.firstName,
@@ -134,19 +134,8 @@ export default function NewUserDialog({ open, onClose, onUserCreated }: NewUserD
         isActive: formData.isActive
       };
 
-      const response = await fetch('http://localhost:3001/api/users/register', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create user');
-      }
+      const response = await userApi.create(userData);
+      const result = await fetchJson(response);
 
       // Reset form
       setFormData({

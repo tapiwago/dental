@@ -80,14 +80,12 @@ export default function Users() {
   }, []);
 
   useEffect(() => {
-    alert(111111111)
     filterUsers();
   }, [users, searchTerm, selectedRole, selectedDepartment, activeFilter]);
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      alert(123)
       
       const response = await userApi.getAll();
       const data = await fetchJson(response);
@@ -239,7 +237,7 @@ export default function Users() {
   if (loading) {
     return (
       <Box sx={{ p: 3 }}>
-        <Typography>Loading users...</Typography>
+        <Typography>Loading users</Typography>
       </Box>
     );
   }
@@ -251,7 +249,7 @@ export default function Users() {
         <Stack direction="row" justifyContent="space-between" alignItems="center">
           <Stack>
             <Typography variant="h4" component="h1" gutterBottom>
-              User Management
+              User Management 11
             </Typography>
             <Typography variant="body1" color="text.secondary">
               Manage user accounts, roles, and permissions
