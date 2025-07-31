@@ -78,7 +78,7 @@ function FirebaseAuthProvider(props: FuseAuthProviderComponentProps) {
 						// If user data doess not exist in db, create a new user record
 						const newUserResponse = await authCreateDbUser({
 							email: userAttributes.email,
-							role: ['admin'],
+							role: 'Team Member', // Default role for new users
 							displayName: userAttributes.displayName,
 							photoURL: userAttributes.photoURL
 						});

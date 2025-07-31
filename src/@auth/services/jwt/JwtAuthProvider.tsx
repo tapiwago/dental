@@ -3,24 +3,35 @@ import { FuseAuthProviderComponentProps, FuseAuthProviderState } from '@fuse/cor
 import useLocalStorage from '@fuse/hooks/useLocalStorage';
 import { authRefreshToken, authSignIn, authSignInWithToken, authSignUp, authUpdateDbUser } from '@auth/authApi';
 import { User } from '../../user';
-import { removeGlobalHeaders, setGlobalHeaders } from '@/utils/apiFetch';
+import { setAuthToken, removeAuthToken } from '@/utils/authFetch';
 import { isTokenValid } from './utils/jwtUtils';
 import JwtAuthContext from '@auth/services/jwt/JwtAuthContext';
 import { JwtAuthContextType } from '@auth/services/jwt/JwtAuthContext';
 
 export type JwtSignInPayload = {
-	email: string;
+	firstName: string;
 	password: string;
 };
 
 export type JwtSignUpPayload = {
-	displayName: string;
-	email: string;
+	firstName: string;
+	lastName: string;
 	password: string;
+	email?: string;
+	role?: string;
 };
 
 function JwtAuthProvider(props: FuseAuthProviderComponentProps) {
 	const { ref, children, onAuthStateChanged } = props;
+
+	// Ensure JWT is set as the auth provider
+	useEffect(() => {
+		const currentProvider = localStorage.getItem('fuseReactAuthProvider');
+		if (currentProvider !== 'jwt') {
+			localStorage.setItem('fuseReactAuthProvider', 'jwt');
+			console.log('JWT Auth Provider: Set auth provider to jwt');
+		}
+	}, []);
 
 	const {
 		value: tokenStorageValue,
@@ -36,6 +47,8 @@ function JwtAuthProvider(props: FuseAuthProviderComponentProps) {
 		isAuthenticated: false,
 		user: null
 	});
+
+	console.log('JWT Auth Provider: Current auth state:', authState);
 
 	/**
 	 * Watch for changes in the auth state
@@ -53,8 +66,10 @@ function JwtAuthProvider(props: FuseAuthProviderComponentProps) {
 	useEffect(() => {
 		const attemptAutoLogin = async () => {
 			const accessToken = tokenStorageValue;
+			console.log('JWT Auth Provider: Attempting auto-login with token:', !!accessToken);
 
 			if (isTokenValid(accessToken)) {
+				console.log('JWT Auth Provider: Token is valid, attempting sign-in with token');
 				try {
 					/**
 					 * Sign in with the token
@@ -62,31 +77,52 @@ function JwtAuthProvider(props: FuseAuthProviderComponentProps) {
 					const response = await authSignInWithToken(accessToken);
 
 					if (!response.ok) {
+						console.error('JWT Auth Provider: Sign-in with token failed:', response.status);
 						throw new Error(`HTTP error! status: ${response.status}`);
 					}
 
 					const userData = (await response.json()) as User;
+					console.log('JWT Auth Provider: Auto-login successful for user:', userData.firstName);
 
 					return userData;
-				} catch {
+				} catch (error) {
+					console.error('JWT Auth Provider: Auto-login error:', error);
 					return false;
 				}
+			} else {
+				console.log('JWT Auth Provider: No valid token found for auto-login');
 			}
 
 			return false;
 		};
 
-		if (!authState.isAuthenticated) {
+		// Only run auto-login if we're in configuring state
+		if (authState.authStatus === 'configuring') {
+			console.log('JWT Auth Provider: Auth state is configuring, attempting auto-login');
 			attemptAutoLogin().then((userData) => {
 				if (userData) {
+					// Create displayName from firstName and lastName
+					const user = {
+						...userData,
+						displayName: userData.firstName + (userData.lastName ? ` ${userData.lastName}` : ''),
+						// Ensure role is properly formatted
+						role: userData.role
+					};
+
+					console.log('JWT Auth Provider: Setting auto-login authenticated state');
 					setAuthState({
 						authStatus: 'authenticated',
 						isAuthenticated: true,
-						user: userData
+						user
 					});
+					// Set the auth token for subsequent requests
+					if (tokenStorageValue) {
+						setAuthToken(tokenStorageValue);
+					}
 				} else {
+					console.log('JWT Auth Provider: Auto-login failed, setting unauthenticated state');
 					removeTokenStorageValue();
-					removeGlobalHeaders(['Authorization']);
+					removeAuthToken();
 					setAuthState({
 						authStatus: 'unauthenticated',
 						isAuthenticated: false,
@@ -96,25 +132,61 @@ function JwtAuthProvider(props: FuseAuthProviderComponentProps) {
 			});
 		}
 		// eslint-disable-next-line
-	}, [authState.isAuthenticated]);
+	}, []);
 
 	/**
 	 * Sign in
 	 */
 	const signIn: JwtAuthContextType['signIn'] = useCallback(
 		async (credentials) => {
+			console.log('JWT Auth Provider: Signing in with credentials:', { firstName: credentials.firstName, password: '***' });
+			
 			const response = await authSignIn(credentials);
 
-			const session = (await response.json()) as { user: User; access_token: string };
+			console.log('JWT Auth Provider: Sign in response status:', response.status);
 
-			if (session) {
+			if (!response.ok) {
+				console.error('JWT Auth Provider: Sign in failed with status:', response.status);
+				return response;
+			}
+
+			const session = (await response.json()) as { 
+				success: boolean;
+				user: User; 
+				token: string;
+			};
+
+			console.log('JWT Auth Provider: Sign in response data:', { 
+				success: session.success, 
+				user: session.user?.firstName, 
+				hasToken: !!session.token 
+			});
+
+			if (session && session.success) {
+				// Create displayName from firstName and lastName
+				const user = {
+					...session.user,
+					displayName: session.user.firstName + (session.user.lastName ? ` ${session.user.lastName}` : ''),
+					// Ensure role is in the format expected by the frontend (can be string or array)
+					role: session.user.role
+				};
+
+				console.log('JWT Auth Provider: Setting authenticated state for user:', user.displayName);
+				console.log('JWT Auth Provider: User data:', user);
+
 				setAuthState({
 					authStatus: 'authenticated',
 					isAuthenticated: true,
-					user: session.user
+					user
 				});
-				setTokenStorageValue(session.access_token);
-				setGlobalHeaders({ Authorization: `Bearer ${session.access_token}` });
+				setTokenStorageValue(session.token);
+				setAuthToken(session.token);
+				
+				console.log('JWT Auth Provider: Auth state updated successfully');
+			} else {
+				console.error('JWT Auth Provider: Sign in failed - no success in session or session is null');
+				console.error('JWT Auth Provider: Session data:', session);
+				throw new Error('Authentication failed');
 			}
 
 			return response;
@@ -138,7 +210,7 @@ function JwtAuthProvider(props: FuseAuthProviderComponentProps) {
 					user: session.user
 				});
 				setTokenStorageValue(session.access_token);
-				setGlobalHeaders({ Authorization: `Bearer ${session.access_token}` });
+				setAuthToken(session.access_token);
 			}
 
 			return response;
@@ -151,7 +223,7 @@ function JwtAuthProvider(props: FuseAuthProviderComponentProps) {
 	 */
 	const signOut: JwtAuthContextType['signOut'] = useCallback(() => {
 		removeTokenStorageValue();
-		removeGlobalHeaders(['Authorization']);
+		removeAuthToken();
 		setAuthState({
 			authStatus: 'unauthenticated',
 			isAuthenticated: false,
@@ -218,7 +290,7 @@ function JwtAuthProvider(props: FuseAuthProviderComponentProps) {
 			const newAccessToken = response.headers.get('New-Access-Token');
 
 			if (newAccessToken) {
-				setGlobalHeaders({ Authorization: `Bearer ${newAccessToken}` });
+				setAuthToken(newAccessToken);
 				setTokenStorageValue(newAccessToken);
 			}
 

@@ -1,0 +1,171 @@
+import { API_BASE_URL } from './apiFetch';
+
+// Define the types for options and configuration
+type AuthFetchOptions = RequestInit & {
+  requireAuth?: boolean;
+  skipGlobalHeaders?: boolean;
+};
+
+export class AuthFetchError extends Error {
+  status: number;
+  data: unknown;
+  isAuthError: boolean;
+
+  constructor(status: number, data: unknown) {
+    super(`AuthFetchError: ${status}`);
+    this.status = status;
+    this.data = data;
+    this.isAuthError = status === 401 || status === 403;
+  }
+}
+
+// Global headers configuration for authentication
+export const authHeaders: Record<string, string> = {};
+
+// Function to set authentication token
+export const setAuthToken = (token: string) => {
+  authHeaders.Authorization = `Bearer ${token}`;
+};
+
+// Function to remove authentication token
+export const removeAuthToken = () => {
+  delete authHeaders.Authorization;
+};
+
+// Function to get current auth token
+export const getAuthToken = (): string | null => {
+  return authHeaders.Authorization?.replace('Bearer ', '') || null;
+};
+
+// Function to update global auth headers
+export const setAuthHeaders = (newHeaders: Record<string, string>) => {
+  Object.assign(authHeaders, newHeaders);
+};
+
+export const removeAuthHeaders = (headerKeys: string[]) => {
+  headerKeys.forEach((key) => {
+    delete authHeaders[key];
+  });
+};
+
+// Check if user is authenticated
+export const isAuthenticated = (): boolean => {
+  return !!authHeaders.Authorization;
+};
+
+// Enhanced authFetch function with authentication middleware
+const authFetch = async (endpoint: string, options: AuthFetchOptions = {}) => {
+  const { 
+    headers, 
+    requireAuth = false, 
+    skipGlobalHeaders = false,
+    ...restOptions 
+  } = options;
+  
+  const method = restOptions.method || 'GET';
+  const fullUrl = `${API_BASE_URL}${endpoint}`;
+  
+  console.log(`AuthFetch: ${method} ${fullUrl}`);
+  console.log('AuthFetch: API_BASE_URL is:', API_BASE_URL);
+  
+  // Check authentication requirement
+  if (requireAuth && !isAuthenticated()) {
+    console.error('AuthFetch: Authentication required but user is not authenticated');
+    throw new AuthFetchError(401, { 
+      success: false, 
+      error: 'Authentication required' 
+    });
+  }
+  
+  // Set default headers, including auth headers
+  const config: RequestInit = {
+    headers: {
+      ...(method !== 'GET' && { 'Content-Type': 'application/json' }),
+      ...(skipGlobalHeaders ? {} : authHeaders),
+      ...headers
+    },
+    ...restOptions
+  };
+
+  console.log('AuthFetch: Request config:', {
+    url: fullUrl,
+    method,
+    headers: config.headers,
+    hasBody: !!config.body
+  });
+
+  try {
+    const response = await fetch(fullUrl, config);
+
+    console.log(`AuthFetch: Response ${response.status} ${response.statusText}`);
+
+    // Handle authentication errors specifically
+    if (response.status === 401) {
+      console.warn('AuthFetch: 401 Unauthorized - clearing auth token');
+      // Clear auth token on 401
+      removeAuthToken();
+      // You might want to redirect to login here
+      // window.location.href = '/sign-in';
+    }
+
+    if (!response.ok) {
+      let errorData;
+      try {
+        errorData = await response.json();
+        console.error('AuthFetch: Error response data:', errorData);
+      } catch {
+        errorData = { success: false, error: 'Network error occurred' };
+        console.error('AuthFetch: Failed to parse error response');
+      }
+      throw new AuthFetchError(response.status, errorData);
+    }
+
+    console.log('AuthFetch: Request successful');
+    return response;
+  } catch (error) {
+    if (error instanceof AuthFetchError) {
+      throw error;
+    }
+    
+    console.error('AuthFetch: Network error:', error);
+    throw new AuthFetchError(0, { 
+      success: false, 
+      error: 'Network error occurred' 
+    });
+  }
+};
+
+// Convenience methods for common HTTP operations
+export const authGet = (endpoint: string, options: Omit<AuthFetchOptions, 'method'> = {}) => {
+  return authFetch(endpoint, { ...options, method: 'GET' });
+};
+
+export const authPost = (endpoint: string, data?: unknown, options: Omit<AuthFetchOptions, 'method' | 'body'> = {}) => {
+  return authFetch(endpoint, {
+    ...options,
+    method: 'POST',
+    body: data ? JSON.stringify(data) : undefined
+  });
+};
+
+export const authPut = (endpoint: string, data?: unknown, options: Omit<AuthFetchOptions, 'method' | 'body'> = {}) => {
+  return authFetch(endpoint, {
+    ...options,
+    method: 'PUT',
+    body: data ? JSON.stringify(data) : undefined
+  });
+};
+
+export const authDelete = (endpoint: string, options: Omit<AuthFetchOptions, 'method'> = {}) => {
+  return authFetch(endpoint, { ...options, method: 'DELETE' });
+};
+
+export const authPatch = (endpoint: string, data?: unknown, options: Omit<AuthFetchOptions, 'method' | 'body'> = {}) => {
+  return authFetch(endpoint, {
+    ...options,
+    method: 'PATCH',
+    body: data ? JSON.stringify(data) : undefined
+  });
+};
+
+export default authFetch;

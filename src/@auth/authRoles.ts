@@ -1,21 +1,27 @@
 /**
  * The authRoles object defines the authorization roles for the Fuse application.
+ * Roles match the backend User model: Admin, Champion, Team Member, Senior Champion
  */
 const authRoles = {
 	/**
-	 * The admin role grants access to users with the 'admin' role.
+	 * The admin role grants access to users with the 'Admin' role only.
 	 */
-	admin: ['admin'],
+	admin: ['Admin'],
 
 	/**
-	 * The staff role grants access to users with the 'admin' or 'staff' role.
+	 * The champion role grants access to users with 'Admin', 'Champion', or 'Senior Champion' roles.
 	 */
-	staff: ['admin', 'staff'],
+	champion: ['Admin', 'Champion', 'Senior Champion'],
 
 	/**
-	 * The user role grants access to users with the 'admin', 'staff', or 'user' role.
+	 * The teamMember role grants access to all authenticated users.
 	 */
-	user: ['admin', 'staff', 'user'],
+	teamMember: ['Admin', 'Champion', 'Senior Champion', 'Team Member'],
+
+	/**
+	 * The senior role grants access to users with 'Admin' or 'Senior Champion' roles.
+	 */
+	senior: ['Admin', 'Senior Champion'],
 
 	/**
 	 * The onlyGuest role grants access to unauthenticated users.

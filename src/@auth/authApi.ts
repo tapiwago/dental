@@ -1,20 +1,20 @@
 import { User } from '@auth/user';
 import UserModel from '@auth/user/models/UserModel';
 import { PartialDeep } from 'type-fest';
-import apiFetch from '@/utils/apiFetch';
+import authFetch from '@/utils/authFetch';
 
 /**
  * Refreshes the access token
  */
 export async function authRefreshToken(): Promise<Response> {
-	return apiFetch('/api/mock/auth/refresh', { method: 'POST' });
+	return authFetch('/api/mock/auth/refresh', { method: 'POST' });
 }
 
 /**
  * Sign in with token
  */
 export async function authSignInWithToken(accessToken: string): Promise<Response> {
-	return apiFetch('/api/mock/auth/sign-in-with-token', {
+	return authFetch('/api/users/signin-with-token', {
 		headers: { Authorization: `Bearer ${accessToken}` }
 	});
 }
@@ -22,8 +22,8 @@ export async function authSignInWithToken(accessToken: string): Promise<Response
 /**
  * Sign in
  */
-export async function authSignIn(credentials: { email: string; password: string }): Promise<Response> {
-	return apiFetch('/api/mock/auth/sign-in', {
+export async function authSignIn(credentials: { firstName: string; password: string }): Promise<Response> {
+	return authFetch('/api/users/signin', {
 		method: 'POST',
 		body: JSON.stringify(credentials)
 	});
@@ -32,8 +32,8 @@ export async function authSignIn(credentials: { email: string; password: string 
 /**
  * Sign up
  */
-export async function authSignUp(data: { displayName: string; email: string; password: string }): Promise<Response> {
-	return apiFetch('/api/mock/auth/sign-up', {
+export async function authSignUp(data: { firstName: string; lastName: string; password: string; email?: string; role?: string }): Promise<Response> {
+	return authFetch('/api/users/register', {
 		method: 'POST',
 		body: JSON.stringify(data)
 	});
@@ -43,21 +43,21 @@ export async function authSignUp(data: { displayName: string; email: string; pas
  * Get user by id
  */
 export async function authGetDbUser(userId: string): Promise<Response> {
-	return apiFetch(`/api/mock/auth/user/${userId}`);
+	return authFetch(`/api/mock/auth/user/${userId}`);
 }
 
 /**
  * Get user by email
  */
 export async function authGetDbUserByEmail(email: string): Promise<Response> {
-	return apiFetch(`/api/mock/auth/user-by-email/${email}`);
+	return authFetch(`/api/mock/auth/user-by-email/${email}`);
 }
 
 /**
  * Update user
  */
 export function authUpdateDbUser(user: PartialDeep<User>) {
-	return apiFetch(`/api/mock/auth/user/${user.id}`, {
+	return authFetch(`/api/mock/auth/user/${user.id}`, {
 		method: 'PUT',
 		body: JSON.stringify(UserModel(user))
 	});
@@ -67,7 +67,7 @@ export function authUpdateDbUser(user: PartialDeep<User>) {
  * Create user
  */
 export async function authCreateDbUser(user: PartialDeep<User>) {
-	return apiFetch('/api/mock/users', {
+	return authFetch('/api/mock/users', {
 		method: 'POST',
 		body: JSON.stringify(UserModel(user))
 	});

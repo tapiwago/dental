@@ -142,26 +142,6 @@ function PoweredByLinks() {
 				</IconButton>
 			</Tooltip>
 			<Tooltip
-				title="Mock Service Worker"
-				placement="top"
-			>
-				<IconButton
-					className="min-h-10 w-11 flex justify-center items-center rounded-none"
-					component={motion.a}
-					variants={item}
-					href="https://mswjs.io/"
-					target="_blank"
-					rel="noreferrer noopener"
-					role="button"
-				>
-					<img
-						src="/assets/images/logo/msw.svg"
-						alt="Mock Service Worker"
-						className="min-w-0 w-7"
-					/>
-				</IconButton>
-			</Tooltip>
-			<Tooltip
 				title="TypeScript"
 				placement="top"
 			>

@@ -1,5 +1,6 @@
 const locale = {
 	APPLICATIONS: 'تطبيقات',
+	DASHBOARD: 'لوحة التحكم',
 	EXAMPLE: 'مثال'
 };
 

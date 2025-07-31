@@ -13,6 +13,14 @@ i18n.addResourceBundle('ar', 'navigation', ar);
  */
 const navigationConfig: FuseNavItemType[] = [
 	{
+		id: 'dashboard',
+		title: 'Dashboard',
+		translate: 'DASHBOARD',
+		type: 'item',
+		icon: 'heroicons-outline:view-grid',
+		url: 'dashboard'
+	},
+	{
 		id: 'example-component',
 		title: 'Example',
 		translate: 'EXAMPLE',

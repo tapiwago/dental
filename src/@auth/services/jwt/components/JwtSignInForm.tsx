@@ -9,14 +9,15 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
 import Link from '@fuse/core/Link';
 import Button from '@mui/material/Button';
+import Alert from '@mui/material/Alert';
 import useJwtAuth from '../useJwtAuth';
-import { FetchApiError } from '@/utils/apiFetch';
+import { AuthFetchError } from '@/utils/authFetch';
 
 /**
  * Form Validation Schema
  */
 const schema = z.object({
-	email: z.string().email('You must enter a valid email').nonempty('You must enter an email'),
+	firstName: z.string().nonempty('You must enter your first name'),
 	password: z
 		.string()
 		.min(4, 'Password is too short - must be at least 4 chars.')
@@ -27,7 +28,7 @@ const schema = z.object({
 type FormType = z.infer<typeof schema>;
 
 const defaultValues: FormType = {
-	email: '',
+	firstName: '',
 	password: '',
 	remember: true
 };
@@ -44,28 +45,45 @@ function JwtSignInForm() {
 	const { isValid, dirtyFields, errors } = formState;
 
 	useEffect(() => {
-		setValue('email', 'admin@fusetheme.com', { shouldDirty: true, shouldValidate: true });
-		setValue('password', '5;4+0IOx:\\Dy', { shouldDirty: true, shouldValidate: true });
+		setValue('firstName', 'Jane', { shouldDirty: true, shouldValidate: true });
+		setValue('password', 'password123', { shouldDirty: true, shouldValidate: true });
 	}, [setValue]);
 
 	function onSubmit(formData: FormType) {
-		const { email, password } = formData;
+		const { firstName, password } = formData;
+
+		console.log('JwtSignInForm: Attempting sign in with:', { firstName, password: '***' });
+		console.log('JwtSignInForm: Environment VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL);
 
 		signIn({
-			email,
+			firstName,
 			password
-		}).catch((error: FetchApiError) => {
-			const errorData = error.data as {
-				type: 'email' | 'password' | 'remember' | `root.${string}` | 'root';
-				message: string;
-			}[];
+		})
+		.then(() => {
+			console.log('JwtSignInForm: Sign in successful!');
+		})
+		.catch((error: AuthFetchError) => {
+			console.error('Sign in error:', error);
+			
+			// Handle different types of errors
+			if (error instanceof AuthFetchError) {
+				const errorData = error.data as {
+					success: boolean;
+					error: string;
+				};
 
-			errorData?.forEach?.((err) => {
-				setError(err.type, {
+				// Set a general error message
+				setError('root', {
 					type: 'manual',
-					message: err.message
+					message: errorData?.error || 'Invalid credentials. Please check your first name and password.'
 				});
-			});
+			} else {
+				// Handle network or other errors
+				setError('root', {
+					type: 'manual',
+					message: 'Network error. Please try again.'
+				});
+			}
 		});
 	}
 
@@ -76,18 +94,24 @@ function JwtSignInForm() {
 			className="mt-8 flex w-full flex-col justify-center"
 			onSubmit={handleSubmit(onSubmit)}
 		>
+			{errors.root && (
+				<Alert severity="error" className="mb-4">
+					{errors.root.message}
+				</Alert>
+			)}
+
 			<Controller
-				name="email"
+				name="firstName"
 				control={control}
 				render={({ field }) => (
 					<TextField
 						{...field}
 						className="mb-6"
-						label="Email"
+						label="First Name"
 						autoFocus
-						type="email"
-						error={!!errors.email}
-						helperText={errors?.email?.message}
+						type="text"
+						error={!!errors.firstName}
+						helperText={errors?.firstName?.message}
 						variant="outlined"
 						required
 						fullWidth
@@ -112,33 +136,6 @@ function JwtSignInForm() {
 					/>
 				)}
 			/>
-
-			<div className="flex flex-col items-center justify-center sm:flex-row sm:justify-between">
-				<Controller
-					name="remember"
-					control={control}
-					render={({ field }) => (
-						<FormControl>
-							<FormControlLabel
-								label="Remember me"
-								control={
-									<Checkbox
-										size="small"
-										{...field}
-									/>
-								}
-							/>
-						</FormControl>
-					)}
-				/>
-
-				<Link
-					className="text-md font-medium"
-					to="/#"
-				>
-					Forgot password?
-				</Link>
-			</div>
 
 			<Button
 				variant="contained"

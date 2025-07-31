@@ -1,5 +1,6 @@
 const locale = {
 	APPLICATIONS: 'Programlar',
+	DASHBOARD: 'Panel',
 	EXAMPLE: 'Örnek Sayfa'
 };
 
