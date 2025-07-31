@@ -30,7 +30,7 @@ function Logo() {
 					alt="logo"
 				/>
 				<div className="logo-text flex flex-col flex-auto gap-0.5">
-					<Typography className="text-2xl tracking-light font-semibold leading-none">FUSE</Typography>
+					<Typography className="text-2xl tracking-light font-semibold leading-none">Aligned</Typography>
 					<Typography
 						className="text-[13.6px] tracking-light font-semibold leading-none"
 						color="primary"
@@ -38,11 +38,11 @@ function Logo() {
 							color: '#82d7f7'
 						}}
 					>
-						REACT
+						Dental
 					</Typography>
 				</div>
 			</div>
-			<MainProjectSelection />
+			{/* <MainProjectSelection /> */}
 		</Root>
 	);
 }
