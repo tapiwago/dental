@@ -53,8 +53,14 @@ function JwtSignUpForm() {
 
 	function onSubmit(formData: FormType) {
 		const { displayName, email, password } = formData;
+		// Split displayName into firstName and lastName
+		const nameParts = displayName.trim().split(' ');
+		const firstName = nameParts[0] || '';
+		const lastName = nameParts.slice(1).join(' ') || '';
+		
 		signUp({
-			displayName,
+			firstName,
+			lastName,
 			password,
 			email
 		})

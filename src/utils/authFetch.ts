@@ -243,6 +243,31 @@ export const templateApi = {
   updateUsage: (id: string) => authPut(`/api/templates/${id}/usage`, {}, { requireAuth: true })
 };
 
+export const stageApi = {
+  getAll: (params?: URLSearchParams) => {
+    const endpoint = params ? `/api/stages?${params.toString()}` : '/api/stages';
+    return authGet(endpoint, { requireAuth: true });
+  },
+  getById: (id: string) => authGet(`/api/stages/${id}`, { requireAuth: true }),
+  create: (stageData: any) => authPost('/api/stages', stageData, { requireAuth: true }),
+  update: (id: string, stageData: any) => authPut(`/api/stages/${id}`, stageData, { requireAuth: true }),
+  delete: (id: string) => authDelete(`/api/stages/${id}`, { requireAuth: true })
+};
+
+export const taskApi = {
+  getAll: (params?: URLSearchParams) => {
+    const endpoint = params ? `/api/tasks?${params.toString()}` : '/api/tasks';
+    return authGet(endpoint, { requireAuth: true });
+  },
+  getById: (id: string) => authGet(`/api/tasks/${id}`, { requireAuth: true }),
+  create: (taskData: any) => authPost('/api/tasks', taskData, { requireAuth: true }),
+  update: (id: string, taskData: any) => authPut(`/api/tasks/${id}`, taskData, { requireAuth: true }),
+  delete: (id: string) => authDelete(`/api/tasks/${id}`, { requireAuth: true }),
+  updateStatus: (id: string, status: string) => authPut(`/api/tasks/${id}/status`, { status }, { requireAuth: true }),
+  assign: (id: string, assignData: any) => authPost(`/api/tasks/${id}/assign`, assignData, { requireAuth: true }),
+  addComment: (id: string, comment: any) => authPost(`/api/tasks/${id}/comments`, comment, { requireAuth: true })
+};
+
 export const authApi = {
   signin: (credentials: { firstName: string; password: string }) => 
     authPost('/api/users/signin', credentials),

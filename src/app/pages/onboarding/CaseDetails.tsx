@@ -12,12 +12,20 @@ import {
 	ListItemText,
 	Button,
 	CircularProgress,
-	Alert
+	Alert,
+	ButtonGroup
 } from '@mui/material';
-import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
+import { 
+	ArrowBack as ArrowBackIcon,
+	Add as AddIcon,
+	FileDownload as ImportIcon
+} from '@mui/icons-material';
 import { useParams } from 'react-router';
 import useNavigate from '@fuse/hooks/useNavigate';
 import { onboardingApi, fetchJson } from '@/utils/authFetch';
+import ImportTemplateDialog from './ImportTemplateDialog';
+import AddStageDialog from './AddStageDialog';
+import AddTaskDialog from './AddTaskDialog';
 
 interface CaseDetails {
 	_id: string;
@@ -62,10 +70,16 @@ interface CaseDetails {
 	updatedAt: string;
 	stages?: Array<{
 		_id: string;
-		title: string;
+		name: string;
 		description?: string;
 		status: string;
 		sequence: number;
+		championId?: {
+			_id: string;
+			firstName: string;
+			lastName: string;
+			email: string;
+		};
 	}>;
 	tasks?: Array<{
 		_id: string;
@@ -101,6 +115,12 @@ function CaseDetails() {
 	const [caseDetails, setCaseDetails] = useState<CaseDetails | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState('');
+	
+	// Dialog states
+	const [importDialogOpen, setImportDialogOpen] = useState(false);
+	const [addStageDialogOpen, setAddStageDialogOpen] = useState(false);
+	const [addTaskDialogOpen, setAddTaskDialogOpen] = useState(false);
+	const [importType, setImportType] = useState<'workflow' | 'stage' | 'task'>('workflow');
 
 	useEffect(() => {
 		if (id) {
@@ -153,6 +173,29 @@ function CaseDetails() {
 		navigate('/onboarding');
 	};
 
+	const handleImportSuccess = () => {
+		// Refresh case details after import
+		fetchCaseDetails();
+		setImportDialogOpen(false);
+	};
+
+	const handleOpenImportDialog = (type: 'workflow' | 'stage' | 'task') => {
+		setImportType(type);
+		setImportDialogOpen(true);
+	};
+
+	const handleStageCreated = () => {
+		// Refresh case details after stage creation
+		fetchCaseDetails();
+		setAddStageDialogOpen(false);
+	};
+
+	const handleTaskCreated = () => {
+		// Refresh case details after task creation
+		fetchCaseDetails();
+		setAddTaskDialogOpen(false);
+	};
+
 	if (loading) {
 		return (
 			<Box className="flex justify-center items-center min-h-400">
@@ -196,24 +239,24 @@ function CaseDetails() {
 	}
 
 	return (
-		<div className="w-full p-24">
+		<div className="w-full p-5">
 			{/* Header */}
-			<Box className="mb-24">
+			<Box className="mb-16">
 				<Button
 					variant="outlined"
 					startIcon={<ArrowBackIcon />}
 					onClick={handleBack}
-					className="mb-16"
+					className="mb-12"
 				>
 					Back to Onboarding
 				</Button>
 				
 				<Box className="flex items-center justify-between">
 					<div>
-						<Typography variant="h4" className="font-bold">
+						<Typography variant="h5" className="font-bold">
 							Case Details: {caseDetails.caseId}
 						</Typography>
-						<Typography variant="body1" color="text.secondary">
+						<Typography variant="body2" color="text.secondary">
 							Client: {caseDetails.clientId.name}
 						</Typography>
 					</div>
@@ -221,25 +264,25 @@ function CaseDetails() {
 						<Chip
 							label={caseDetails.status}
 							color={getStatusColor(caseDetails.status) as any}
-							size="medium"
+							size="small"
 						/>
 						<Chip
 							label={caseDetails.priority}
 							color={getPriorityColor(caseDetails.priority) as any}
-							size="medium"
+							size="small"
 						/>
 					</Box>
 				</Box>
 			</Box>
 
-			<Box className="grid grid-cols-1 md:grid-cols-2 gap-24">
+			<Box className="grid grid-cols-1 md:grid-cols-2 gap-16">
 				{/* Case Information */}
 				<Card>
-					<CardContent>
-						<Typography variant="h6" className="mb-16">
+					<CardContent className="p-5">
+						<Typography variant="h6" className="mb-12">
 							Case Information
 						</Typography>
-						<Box className="space-y-12">
+						<Box className="space-y-8">
 							<Box>
 								<Typography variant="body2" color="text.secondary">
 									Case ID
@@ -252,8 +295,8 @@ function CaseDetails() {
 								<Typography variant="body2" color="text.secondary">
 									Progress
 								</Typography>
-								<Box className="flex items-center gap-8 mt-4">
-									<Box className="w-200 h-8 bg-gray-200 rounded-full overflow-hidden">
+								<Box className="flex items-center gap-8 mt-2">
+									<Box className="w-150 h-6 bg-gray-200 rounded-full overflow-hidden">
 										<Box
 											className="h-full bg-blue-500"
 											style={{ width: `${caseDetails.progress}%` }}
@@ -315,7 +358,7 @@ function CaseDetails() {
 							)}
 							{caseDetails.tags && caseDetails.tags.length > 0 && (
 								<Box>
-									<Typography variant="body2" color="text.secondary" className="mb-8">
+									<Typography variant="body2" color="text.secondary" className="mb-6">
 										Tags
 									</Typography>
 									<Box className="flex flex-wrap gap-4">
@@ -331,11 +374,11 @@ function CaseDetails() {
 
 				{/* Client Information */}
 				<Card>
-					<CardContent>
-						<Typography variant="h6" className="mb-16">
+					<CardContent className="p-5">
+						<Typography variant="h6" className="mb-12">
 							Client Information
 						</Typography>
-						<Box className="space-y-12">
+						<Box className="space-y-8">
 							<Box>
 								<Typography variant="body2" color="text.secondary">
 									Name
@@ -384,12 +427,12 @@ function CaseDetails() {
 			</Box>
 
 			{/* Additional sections */}
-			<Box className="space-y-24 mt-24">
+			<Box className="space-y-16 mt-16">
 				{/* Linked Guides */}
 				{caseDetails.linkedGuides && caseDetails.linkedGuides.length > 0 && (
 					<Card>
-						<CardContent>
-							<Typography variant="h6" className="mb-16">
+						<CardContent className="p-5">
+							<Typography variant="h6" className="mb-12">
 								Linked Guides
 							</Typography>
 							<List dense>
@@ -407,17 +450,39 @@ function CaseDetails() {
 				)}
 
 				{/* Stages */}
-				{caseDetails.stages && caseDetails.stages.length > 0 && (
+				{caseDetails.stages && caseDetails.stages.length > 0 ? (
 					<Card>
-						<CardContent>
-							<Typography variant="h6" className="mb-16">
-								Stages
-							</Typography>
+						<CardContent className="p-5">
+							<Box className="flex items-center justify-between mb-12">
+								<Typography variant="h6">
+									Stages
+								</Typography>
+								<ButtonGroup size="small">
+									<Button
+										startIcon={<ImportIcon />}
+										onClick={() => handleOpenImportDialog('workflow')}
+									>
+										Import from Template
+									</Button>
+									<Button
+										startIcon={<AddIcon />}
+										onClick={() => setAddStageDialogOpen(true)}
+									>
+										Add Stage
+									</Button>
+									<Button
+										startIcon={<AddIcon />}
+										onClick={() => setAddTaskDialogOpen(true)}
+									>
+										Add Task
+									</Button>
+								</ButtonGroup>
+							</Box>
 							<List dense>
 								{caseDetails.stages.map((stage) => (
 									<ListItem key={stage._id} divider>
 										<ListItemText
-											primary={`${stage.sequence}. ${stage.title}`}
+											primary={`${stage.sequence}. ${stage.name}`}
 											secondary={
 												<Box>
 													{stage.description && (
@@ -425,11 +490,17 @@ function CaseDetails() {
 															{stage.description}
 														</Typography>
 													)}
-													<Chip
-														label={stage.status}
-														size="small"
-														className="mt-4"
-													/>
+													<Box className="flex gap-8 mt-2">
+														<Chip
+															label={stage.status}
+															size="small"
+														/>
+													</Box>
+													{stage.championId && (
+														<Typography variant="caption" color="text.secondary" className="mt-2">
+															Champion: {stage.championId.firstName} {stage.championId.lastName}
+														</Typography>
+													)}
 												</Box>
 											}
 										/>
@@ -438,15 +509,57 @@ function CaseDetails() {
 							</List>
 						</CardContent>
 					</Card>
+				) : (
+					<Card>
+						<CardContent className="p-5">
+							<Box className="flex items-center justify-between mb-12">
+								<Typography variant="h6">
+									Stages
+								</Typography>
+								<ButtonGroup size="small">
+									<Button
+										startIcon={<ImportIcon />}
+										onClick={() => handleOpenImportDialog('workflow')}
+									>
+										Import from Template
+									</Button>
+									<Button
+										startIcon={<AddIcon />}
+										onClick={() => setAddStageDialogOpen(true)}
+									>
+										Add Stage
+									</Button>
+									<Button
+										startIcon={<AddIcon />}
+										onClick={() => setAddTaskDialogOpen(true)}
+									>
+										Add Task
+									</Button>
+								</ButtonGroup>
+							</Box>
+							<Typography variant="body2" color="text.secondary" className="text-center py-16">
+								No stages found. Import from a template or create manually.
+							</Typography>
+						</CardContent>
+					</Card>
 				)}
 
 				{/* Tasks */}
-				{caseDetails.tasks && caseDetails.tasks.length > 0 && (
+				{caseDetails.tasks && caseDetails.tasks.length > 0 ? (
 					<Card>
-						<CardContent>
-							<Typography variant="h6" className="mb-16">
-								Tasks
-							</Typography>
+						<CardContent className="p-5">
+							<Box className="flex items-center justify-between mb-12">
+								<Typography variant="h6">
+									Tasks
+								</Typography>
+								<Button
+									size="small"
+									startIcon={<AddIcon />}
+									onClick={() => setAddTaskDialogOpen(true)}
+								>
+									Add Task
+								</Button>
+							</Box>
 							<List dense>
 								{caseDetails.tasks.map((task) => (
 									<ListItem key={task._id} divider>
@@ -459,7 +572,7 @@ function CaseDetails() {
 															{task.description}
 														</Typography>
 													)}
-													<Box className="flex gap-8 mt-4">
+													<Box className="flex gap-8 mt-2">
 														<Chip
 															label={task.status}
 															size="small"
@@ -478,7 +591,7 @@ function CaseDetails() {
 														)}
 													</Box>
 													{task.assignedTo && (
-														<Typography variant="caption" color="text.secondary" className="mt-4">
+														<Typography variant="caption" color="text.secondary" className="mt-2">
 															Assigned to: {task.assignedTo.firstName} {task.assignedTo.lastName}
 														</Typography>
 													)}
@@ -490,13 +603,33 @@ function CaseDetails() {
 							</List>
 						</CardContent>
 					</Card>
+				) : (
+					<Card>
+						<CardContent className="p-5">
+							<Box className="flex items-center justify-between mb-12">
+								<Typography variant="h6">
+									Tasks
+								</Typography>
+								<Button
+									size="small"
+									startIcon={<AddIcon />}
+									onClick={() => setAddTaskDialogOpen(true)}
+								>
+									Add Task
+								</Button>
+							</Box>
+							<Typography variant="body2" color="text.secondary" className="text-center py-16">
+								No tasks found. Create tasks manually or import stages with tasks from templates.
+							</Typography>
+						</CardContent>
+					</Card>
 				)}
 
 				{/* Documents */}
 				{caseDetails.documents && caseDetails.documents.length > 0 && (
 					<Card>
-						<CardContent>
-							<Typography variant="h6" className="mb-16">
+						<CardContent className="p-5">
+							<Typography variant="h6" className="mb-12">
 								Documents
 							</Typography>
 							<List dense>
@@ -522,6 +655,31 @@ function CaseDetails() {
 					</Card>
 				)}
 			</Box>
+
+			{/* Import Template Dialog */}
+			<ImportTemplateDialog
+				open={importDialogOpen}
+				onClose={() => setImportDialogOpen(false)}
+				onSuccess={handleImportSuccess}
+				caseId={caseDetails._id}
+				importType={importType}
+			/>
+
+			{/* Add Stage Dialog */}
+			<AddStageDialog
+				open={addStageDialogOpen}
+				onClose={() => setAddStageDialogOpen(false)}
+				onSuccess={handleStageCreated}
+				caseId={caseDetails._id}
+			/>
+
+			{/* Add Task Dialog */}
+			<AddTaskDialog
+				open={addTaskDialogOpen}
+				onClose={() => setAddTaskDialogOpen(false)}
+				onSuccess={handleTaskCreated}
+				caseId={caseDetails._id}
+			/>
 		</div>
 	);
 }
