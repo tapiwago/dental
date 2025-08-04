@@ -17,7 +17,7 @@ const navigationConfig: FuseNavItemType[] = [
 		title: 'Dashboard',
 		translate: 'DASHBOARD',
 		type: 'item',
-		icon: 'heroicons-outline:view-grid',
+		icon: 'heroicons-outline:chart-pie',
 		url: 'dashboard'
 	},
 	{
@@ -25,7 +25,7 @@ const navigationConfig: FuseNavItemType[] = [
 		title: 'Onboarding',
 		translate: 'ONBOARDING',
 		type: 'item',
-		icon: 'heroicons-outline:clipboard-list',
+		icon: 'heroicons-outline:user-plus',
 		url: 'onboarding'
 	},
 	{
@@ -33,7 +33,7 @@ const navigationConfig: FuseNavItemType[] = [
 		title: 'Workflow Templates',
 		translate: 'WORKFLOW_TEMPLATES',
 		type: 'item',
-		icon: 'heroicons-outline:template',
+		icon: 'heroicons-outline:document-duplicate',
 		url: 'workflow-templates'
 	},
 	{
@@ -41,7 +41,7 @@ const navigationConfig: FuseNavItemType[] = [
 		title: 'Clients',
 		translate: 'CLIENTS',
 		type: 'item',
-		icon: 'heroicons-outline:office-building',
+		icon: 'heroicons-outline:user-group',
 		url: 'clients'
 	},
 	{
@@ -57,7 +57,7 @@ const navigationConfig: FuseNavItemType[] = [
 		title: 'Example',
 		translate: 'EXAMPLE',
 		type: 'item',
-		icon: 'heroicons-outline:star',
+		icon: 'heroicons-outline:beaker',
 		url: 'example'
 	}
 ];
