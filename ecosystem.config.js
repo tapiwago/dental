@@ -9,9 +9,9 @@ module.exports = {
       env: {
         NODE_ENV: 'production'
       },
-      log_file: './logs/dental-frontend.log',
-      out_file: './logs/dental-frontend-out.log',
-      error_file: './logs/dental-frontend-error.log',
+      log_file: '/var/www/dental/logs/dental-frontend.log',
+      out_file: '/var/www/dental/logs/dental-frontend-out.log',
+      error_file: '/var/www/dental/logs/dental-frontend-error.log',
       max_memory_restart: '512M'
     },
     {
@@ -21,12 +21,16 @@ module.exports = {
       exec_mode: 'fork',
       env: {
         NODE_ENV: 'production',
-        PORT: 5000
+        PORT: 5000,
+        MONGODB_URI: 'mongodb://localhost:27017/dental_db',
+        DB_NAME: 'dental_db'
       },
-      log_file: './logs/dental-api.log',
-      out_file: './logs/dental-api-out.log',
-      error_file: './logs/dental-api-error.log',
-      max_memory_restart: '1G'
+      log_file: '/var/www/dental/logs/dental-api.log',
+      out_file: '/var/www/dental/logs/dental-api-out.log',
+      error_file: '/var/www/dental/logs/dental-api-error.log',
+      max_memory_restart: '1G',
+      watch: false,
+      ignore_watch: ['node_modules', 'logs']
     }
   ]
 };
