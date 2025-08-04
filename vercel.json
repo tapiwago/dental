@@ -2,9 +2,6 @@
   "buildCommand": "npm run build",
   "outputDirectory": "build",
   "framework": "vite",
-  "env": {
-    "VITE_API_BASE_URL": "http://206.81.11.59:5000"
-  },
   "rewrites": [
     {
       "source": "/(.*)",

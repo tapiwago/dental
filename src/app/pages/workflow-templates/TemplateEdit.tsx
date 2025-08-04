@@ -15,13 +15,16 @@ import {
 	Alert,
 	Chip,
 	FormControlLabel,
-	Switch
+	Switch,
+	Divider
 } from '@mui/material';
 import { ArrowBack as ArrowBackIcon, Save as SaveIcon } from '@mui/icons-material';
 import { useParams } from 'react-router';
 import useNavigate from '@fuse/hooks/useNavigate';
 import { templateApi, fetchJson } from '@/utils/authFetch';
 import useUser from '@auth/useUser';
+import { useAppDispatch } from '@/store/hooks';
+import { showMessage } from '@fuse/core/FuseMessage/fuseMessageSlice';
 
 interface Template {
 	_id: string;
@@ -44,6 +47,7 @@ interface Template {
 function TemplateEdit() {
 	const { id } = useParams<{ id: string }>();
 	const navigate = useNavigate();
+	const dispatch = useAppDispatch();
 	const { data: user } = useUser();
 	const [loading, setLoading] = useState(true);
 	const [saving, setSaving] = useState(false);
@@ -117,23 +121,36 @@ function TemplateEdit() {
 		if (!type) {
 			newErrors.type = 'Type is required';
 		}
-		if (!templateId.trim()) {
-			newErrors.templateId = 'Template ID is required';
-		}
-		if (!user?._id) {
-			newErrors.user = 'User information not available';
-		}
 
 		setErrors(newErrors);
 		return Object.keys(newErrors).length === 0;
 	};
 
-	const handleSave = async () => {
-		if (!validateForm()) return;
+	const clearFieldError = (fieldName: string) => {
+		if (errors[fieldName]) {
+			setErrors(prev => {
+				const newErrors = { ...prev };
+				delete newErrors[fieldName];
+				return newErrors;
+			});
+		}
+	};
 
-		// Ensure user is available
-		if (!user?._id) {
-			setErrors({ submit: 'User information not available. Please refresh and try again.' });
+	const handleSave = async () => {
+		if (!validateForm()) {
+			// Get specific validation errors to show in the message
+			const errorFields = [];
+			if (!name.trim()) errorFields.push('Template Name');
+			if (!type) errorFields.push('Type');
+
+			const errorMessage = errorFields.length > 0 
+				? `Please fix the following fields: ${errorFields.join(', ')}`
+				: 'Please fill in all required fields';
+
+			dispatch(showMessage({ 
+				message: errorMessage, 
+				variant: 'error' 
+			}));
 			return;
 		}
 
@@ -156,20 +173,34 @@ function TemplateEdit() {
 				tags: tags.filter(tag => tag.trim()),
 				categories: categories.filter(cat => cat.trim()),
 				isDefault,
-				lastModifiedBy: user._id
+				// Only include lastModifiedBy if user is available
+				...(user?._id && { lastModifiedBy: user._id })
 			};
 
 			const response = await templateApi.update(id!, templateData);
 			const data = await fetchJson(response);
 
 			if (data._id) {
+				dispatch(showMessage({ 
+					message: 'Template updated successfully!', 
+					variant: 'success' 
+				}));
 				navigate(`/workflow-templates/template/${id}`);
 			} else {
+				dispatch(showMessage({ 
+					message: data.error || 'Failed to update template', 
+					variant: 'error' 
+				}));
 				setErrors({ submit: data.error || 'Failed to update template' });
 			}
 		} catch (error: any) {
 			console.error('Error updating template:', error);
-			setErrors({ submit: 'Failed to update template. Please try again.' });
+			const errorMessage = error.data?.error || error.message || 'Failed to update template. Please try again.';
+			dispatch(showMessage({ 
+				message: errorMessage, 
+				variant: 'error' 
+			}));
+			setErrors({ submit: errorMessage });
 		} finally {
 			setSaving(false);
 		}
@@ -234,18 +265,9 @@ function TemplateEdit() {
 	}
 
 	return (
-		<div className="w-full p-24">
+		<div className="w-full p-5">
 			{/* Header */}
-			<Box className="mb-24">
-				<Button
-					variant="outlined"
-					startIcon={<ArrowBackIcon />}
-					onClick={handleBack}
-					className="mb-16"
-				>
-					Back to Template
-				</Button>
-				
+			<Box className="mb-5">
 				<Box className="flex items-center justify-between">
 					<div>
 						<Typography variant="h4" className="font-bold">
@@ -255,252 +277,260 @@ function TemplateEdit() {
 							Template ID: {templateId}
 						</Typography>
 					</div>
-					<Button
-						variant="contained"
-						startIcon={<SaveIcon />}
-						onClick={handleSave}
-						disabled={saving}
-					>
-						{saving ? 'Saving...' : 'Save Changes'}
-					</Button>
+					<Box className="flex gap-4">
+						<Button
+							variant="outlined"
+							startIcon={<ArrowBackIcon />}
+							onClick={handleBack}
+						>
+							Back to Template
+						</Button>
+						<Button
+							variant="contained"
+							startIcon={<SaveIcon />}
+							onClick={handleSave}
+							disabled={saving}
+						>
+							{saving ? 'Saving...' : 'Save Changes'}
+						</Button>
+					</Box>
 				</Box>
 			</Box>
 
-			<Box className="space-y-24">
-				{/* Basic Information */}
-				<Card>
-					<CardContent>
-						<Typography variant="h6" className="mb-16">Basic Information</Typography>
-						<Box className="grid grid-cols-1 md:grid-cols-2 gap-16">
-							<TextField
-								label="Template Name"
-								value={name}
-								onChange={(e) => setName(e.target.value)}
-								error={!!errors.name}
-								helperText={errors.name}
-								fullWidth
-								required
-							/>
-							<FormControl fullWidth required error={!!errors.type}>
-								<InputLabel>Type</InputLabel>
-								<Select
-									value={type}
-									onChange={(e) => setType(e.target.value)}
-									label="Type"
-								>
-									<MenuItem value="OnboardingCase">Onboarding Case</MenuItem>
-									<MenuItem value="Stage">Stage</MenuItem>
-									<MenuItem value="Task">Task</MenuItem>
-									<MenuItem value="WorkflowGuide">Workflow Guide</MenuItem>
-								</Select>
-								{errors.type && (
-									<Typography variant="caption" color="error" className="mt-4">
-										{errors.type}
-									</Typography>
-								)}
-							</FormControl>
-						</Box>
-						<TextField
-							label="Template ID"
-							value={templateId}
-							onChange={(e) => setTemplateId(e.target.value)}
-							error={!!errors.templateId}
-							helperText={errors.templateId}
-							fullWidth
-							className="mt-16"
-							required
-						/>
-						<TextField
-							label="Description"
-							value={description}
-							onChange={(e) => setDescription(e.target.value)}
-							multiline
-							rows={3}
-							fullWidth
-							className="mt-16"
-						/>
-					</CardContent>
-				</Card>
-
-				{/* Classification */}
-				<Card>
-					<CardContent>
-						<Typography variant="h6" className="mb-16">Classification</Typography>
-						<Box className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16">
-							<FormControl fullWidth>
-								<InputLabel>Industry Type</InputLabel>
-								<Select
-									value={industryType}
-									onChange={(e) => setIndustryType(e.target.value)}
-									label="Industry Type"
-								>
-									<MenuItem value="Dental">Dental</MenuItem>
-									<MenuItem value="Medical">Medical</MenuItem>
-									<MenuItem value="Veterinary">Veterinary</MenuItem>
-									<MenuItem value="General">General</MenuItem>
-								</Select>
-							</FormControl>
-							<FormControl fullWidth>
-								<InputLabel>Client Size</InputLabel>
-								<Select
-									value={clientSize}
-									onChange={(e) => setClientSize(e.target.value)}
-									label="Client Size"
-								>
-									<MenuItem value="Small">Small</MenuItem>
-									<MenuItem value="Medium">Medium</MenuItem>
-									<MenuItem value="Large">Large</MenuItem>
-									<MenuItem value="Enterprise">Enterprise</MenuItem>
-								</Select>
-							</FormControl>
-							<FormControl fullWidth>
-								<InputLabel>Complexity</InputLabel>
-								<Select
-									value={complexity}
-									onChange={(e) => setComplexity(e.target.value)}
-									label="Complexity"
-								>
-									<MenuItem value="Simple">Simple</MenuItem>
-									<MenuItem value="Standard">Standard</MenuItem>
-									<MenuItem value="Complex">Complex</MenuItem>
-									<MenuItem value="Enterprise">Enterprise</MenuItem>
-								</Select>
-							</FormControl>
-							<FormControl fullWidth>
-								<InputLabel>Status</InputLabel>
-								<Select
-									value={status}
-									onChange={(e) => setStatus(e.target.value)}
-									label="Status"
-								>
-									<MenuItem value="Draft">Draft</MenuItem>
-									<MenuItem value="Published">Published</MenuItem>
-									<MenuItem value="Deprecated">Deprecated</MenuItem>
-									<MenuItem value="Archived">Archived</MenuItem>
-								</Select>
-							</FormControl>
-						</Box>
-					</CardContent>
-				</Card>
-
-				{/* Estimates and Version */}
-				<Card>
-					<CardContent>
-						<Typography variant="h6" className="mb-16">Estimates & Version</Typography>
-						<Box className="grid grid-cols-1 md:grid-cols-3 gap-16">
-							<TextField
-								label="Version"
-								value={version}
-								onChange={(e) => setVersion(e.target.value)}
-								fullWidth
-							/>
-							<TextField
-								label="Estimated Duration (days)"
-								type="number"
-								value={estimatedDuration}
-								onChange={(e) => setEstimatedDuration(e.target.value)}
-								fullWidth
-							/>
-							<TextField
-								label="Estimated Cost ($)"
-								type="number"
-								value={estimatedCost}
-								onChange={(e) => setEstimatedCost(e.target.value)}
-								fullWidth
-							/>
-						</Box>
-					</CardContent>
-				</Card>
-
-				{/* Tags and Categories */}
-				<Card>
-					<CardContent>
-						<Typography variant="h6" className="mb-16">Tags & Categories</Typography>
-						
-						{/* Tags */}
-						<Box className="mb-24">
-							<Typography variant="subtitle1" className="mb-12">Tags</Typography>
-							<Box className="flex gap-8 mb-8">
-								<TextField
-									label="Add Tag"
-									value={tagInput}
-									onChange={(e) => setTagInput(e.target.value)}
-									onKeyPress={(e) => handleKeyPress(e, handleAddTag)}
-									size="small"
-									className="flex-1"
-								/>
-								<Button onClick={handleAddTag} variant="outlined" size="small">
-									Add
-								</Button>
-							</Box>
-							<Box className="flex flex-wrap gap-8">
-								{tags.map((tag, index) => (
-									<Chip
-										key={index}
-										label={tag}
-										onDelete={() => handleRemoveTag(tag)}
-										size="small"
-										color="primary"
-										variant="outlined"
-									/>
-								))}
-							</Box>
-						</Box>
-
-						{/* Categories */}
-						<Box>
-							<Typography variant="subtitle1" className="mb-12">Categories</Typography>
-							<Box className="flex gap-8 mb-8">
-								<TextField
-									label="Add Category"
-									value={categoryInput}
-									onChange={(e) => setCategoryInput(e.target.value)}
-									onKeyPress={(e) => handleKeyPress(e, handleAddCategory)}
-									size="small"
-									className="flex-1"
-								/>
-								<Button onClick={handleAddCategory} variant="outlined" size="small">
-									Add
-								</Button>
-							</Box>
-							<Box className="flex flex-wrap gap-8">
-								{categories.map((category, index) => (
-									<Chip
-										key={index}
-										label={category}
-										onDelete={() => handleRemoveCategory(category)}
-										size="small"
-										color="secondary"
-										variant="outlined"
-									/>
-								))}
-							</Box>
-						</Box>
-					</CardContent>
-				</Card>
-
-				{/* Options */}
-				<Card>
-					<CardContent>
-						<Typography variant="h6" className="mb-16">Options</Typography>
-						<FormControlLabel
-							control={
-								<Switch
-									checked={isDefault}
-									onChange={(e) => setIsDefault(e.target.checked)}
-								/>
-							}
-							label="Set as default template for this type"
-						/>
-					</CardContent>
-				</Card>
-
-				{errors.submit && (
-					<Alert severity="error">
-						{errors.submit}
-					</Alert>
-				)}
+			<Divider className="mb-5" />
+			{/* Basic Information */}
+			<Box className="mb-5">
+				<Typography variant="h6" className="mb-5">Basic Information</Typography>
+				<Box className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+					<TextField
+						label="Template Name"
+						value={name}
+						onChange={(e) => {
+							setName(e.target.value);
+							clearFieldError('name');
+						}}
+						error={!!errors.name}
+						helperText={errors.name}
+						fullWidth
+						required
+					/>
+					<FormControl fullWidth required error={!!errors.type}>
+						<InputLabel>Type</InputLabel>
+						<Select
+							value={type}
+							onChange={(e) => {
+								setType(e.target.value);
+								clearFieldError('type');
+							}}
+							label="Type"
+						>
+							<MenuItem value="OnboardingCase">Onboarding Case</MenuItem>
+							<MenuItem value="Stage">Stage</MenuItem>
+							<MenuItem value="Task">Task</MenuItem>
+							<MenuItem value="WorkflowGuide">Workflow Guide</MenuItem>
+						</Select>
+						{errors.type && (
+							<Typography variant="caption" color="error" className="mt-1">
+								{errors.type}
+							</Typography>
+						)}
+					</FormControl>
+				</Box>
+				<TextField
+					label="Template ID"
+					value={templateId}
+					fullWidth
+					className="mb-5"
+					InputProps={{
+						readOnly: true,
+					}}
+					helperText="Template ID cannot be modified"
+				/>
+				<TextField
+					label="Description"
+					value={description}
+					onChange={(e) => setDescription(e.target.value)}
+					multiline
+					rows={3}
+					fullWidth
+					className="mb-5"
+				/>
+				<Divider />
 			</Box>
+
+			{/* Classification */}
+			<Box className="mb-5">
+				<Typography variant="h6" className="mb-5">Classification</Typography>
+				<Box className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-5">
+					<FormControl fullWidth>
+						<InputLabel>Industry Type</InputLabel>
+						<Select
+							value={industryType}
+							onChange={(e) => setIndustryType(e.target.value)}
+							label="Industry Type"
+						>
+							<MenuItem value="Dental">Dental</MenuItem>
+							<MenuItem value="Medical">Medical</MenuItem>
+							<MenuItem value="Veterinary">Veterinary</MenuItem>
+							<MenuItem value="General">General</MenuItem>
+						</Select>
+					</FormControl>
+					<FormControl fullWidth>
+						<InputLabel>Client Size</InputLabel>
+						<Select
+							value={clientSize}
+							onChange={(e) => setClientSize(e.target.value)}
+							label="Client Size"
+						>
+							<MenuItem value="Small">Small</MenuItem>
+							<MenuItem value="Medium">Medium</MenuItem>
+							<MenuItem value="Large">Large</MenuItem>
+							<MenuItem value="Enterprise">Enterprise</MenuItem>
+						</Select>
+					</FormControl>
+					<FormControl fullWidth>
+						<InputLabel>Complexity</InputLabel>
+						<Select
+							value={complexity}
+							onChange={(e) => setComplexity(e.target.value)}
+							label="Complexity"
+						>
+							<MenuItem value="Simple">Simple</MenuItem>
+							<MenuItem value="Standard">Standard</MenuItem>
+							<MenuItem value="Complex">Complex</MenuItem>
+							<MenuItem value="Enterprise">Enterprise</MenuItem>
+						</Select>
+					</FormControl>
+					<FormControl fullWidth>
+						<InputLabel>Status</InputLabel>
+						<Select
+							value={status}
+							onChange={(e) => setStatus(e.target.value)}
+							label="Status"
+						>
+							<MenuItem value="Draft">Draft</MenuItem>
+							<MenuItem value="Published">Published</MenuItem>
+							<MenuItem value="Deprecated">Deprecated</MenuItem>
+							<MenuItem value="Archived">Archived</MenuItem>
+						</Select>
+					</FormControl>
+				</Box>
+				<Divider />
+			</Box>
+
+			{/* Estimates and Version */}
+			<Box className="mb-5">
+				<Typography variant="h6" className="mb-5">Estimates & Version</Typography>
+				<Box className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5">
+					<TextField
+						label="Version"
+						value={version}
+						onChange={(e) => setVersion(e.target.value)}
+						fullWidth
+					/>
+					<TextField
+						label="Estimated Duration (days)"
+						type="number"
+						value={estimatedDuration}
+						onChange={(e) => setEstimatedDuration(e.target.value)}
+						fullWidth
+					/>
+					<TextField
+						label="Estimated Cost ($)"
+						type="number"
+						value={estimatedCost}
+						onChange={(e) => setEstimatedCost(e.target.value)}
+						fullWidth
+					/>
+				</Box>
+				<Divider />
+			</Box>
+
+			{/* Tags and Categories */}
+			<Box className="mb-5">
+				<Typography variant="h6" className="mb-5">Tags & Categories</Typography>
+				
+				{/* Tags */}
+				<Box className="mb-5">
+					<Typography variant="subtitle1" className="mb-3">Tags</Typography>
+					<Box className="flex gap-2 mb-2">
+						<TextField
+							label="Add Tag"
+							value={tagInput}
+							onChange={(e) => setTagInput(e.target.value)}
+							onKeyPress={(e) => handleKeyPress(e, handleAddTag)}
+							size="small"
+							className="flex-1"
+						/>
+						<Button onClick={handleAddTag} variant="outlined" size="small">
+							Add
+						</Button>
+					</Box>
+					<Box className="flex flex-wrap gap-2">
+						{tags.map((tag, index) => (
+							<Chip
+								key={index}
+								label={tag}
+								onDelete={() => handleRemoveTag(tag)}
+								size="small"
+								color="primary"
+								variant="outlined"
+							/>
+						))}
+					</Box>
+				</Box>
+
+				{/* Categories */}
+				<Box className="mb-5">
+					<Typography variant="subtitle1" className="mb-3">Categories</Typography>
+					<Box className="flex gap-2 mb-2">
+						<TextField
+							label="Add Category"
+							value={categoryInput}
+							onChange={(e) => setCategoryInput(e.target.value)}
+							onKeyPress={(e) => handleKeyPress(e, handleAddCategory)}
+							size="small"
+							className="flex-1"
+						/>
+						<Button onClick={handleAddCategory} variant="outlined" size="small">
+							Add
+						</Button>
+					</Box>
+					<Box className="flex flex-wrap gap-2">
+						{categories.map((category, index) => (
+							<Chip
+								key={index}
+								label={category}
+								onDelete={() => handleRemoveCategory(category)}
+								size="small"
+								color="secondary"
+								variant="outlined"
+							/>
+						))}
+					</Box>
+				</Box>
+				<Divider />
+			</Box>
+
+			{/* Options */}
+			<Box className="mb-5">
+				<Typography variant="h6" className="mb-5">Options</Typography>
+				<FormControlLabel
+					control={
+						<Switch
+							checked={isDefault}
+							onChange={(e) => setIsDefault(e.target.checked)}
+						/>
+					}
+					label="Set as default template for this type"
+				/>
+			</Box>
+
+			{errors.submit && (
+				<Alert severity="error">
+					{errors.submit}
+				</Alert>
+			)}
 		</div>
 	);
 }
