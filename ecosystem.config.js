@@ -23,7 +23,8 @@ module.exports = {
         NODE_ENV: 'production',
         PORT: 5000,
         MONGODB_URI: 'mongodb://localhost:27017/dental_db',
-        DB_NAME: 'dental_db'
+        DB_NAME: 'dental_db',
+        BIND_IP: '10.116.0.2'
       },
       log_file: '/var/www/dental/logs/dental-api.log',
       out_file: '/var/www/dental/logs/dental-api-out.log',
