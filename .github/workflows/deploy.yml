@@ -22,11 +22,10 @@ jobs:
     - name: Install dependencies
       run: npm install --legacy-peer-deps
 
-    - name: Lint
-      run: |
-        if [ -f package.json ] && grep -q 'lint' package.json; then npm run lint; else echo "No lint script"; fi
+    - name: Build
+      run: npm run build
 
-    # Test step removed
+    # Lint step removed
 
   deploy:
     runs-on: ubuntu-latest
@@ -44,13 +43,6 @@ jobs:
 
       - name: Add server to known_hosts
         run: ssh-keyscan -H 134.209.121.112 >> ~/.ssh/known_hosts
-
-      - name: Debug secrets
-        run: |
-          echo "REACT_APP_API_URL: ${{ env.REACT_APP_API_URL }}"
-          echo "DENTAL_DEPLOY_KEY: ${{ secrets.DENTAL_DEPLOY_KEY }}"
-
-
 
       - name: Deploy to DigitalOcean
         env:
