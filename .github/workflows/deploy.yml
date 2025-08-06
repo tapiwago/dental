@@ -45,8 +45,6 @@ jobs:
         run: ssh-keyscan -H 134.209.121.112 >> ~/.ssh/known_hosts
 
       - name: Deploy to DigitalOcean
-        env:
-          REACT_APP_API_URL: "http://10.116.0.2:5000"
         run: |
           ssh root@134.209.121.112 << 'EOF'
             set -e
@@ -56,8 +54,7 @@ jobs:
               cd /root/dental-frontend && git pull origin main
             fi
             cd /root/dental-frontend
-            echo "VITE_API_BASE_URL=" > .env.production
-            echo "NODE_ENV=production" >> .env.production
+            cp public/config.production.json public/config.json
             npm install --legacy-peer-deps
             npm run build
             apt-get update -qq
