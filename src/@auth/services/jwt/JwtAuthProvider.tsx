@@ -29,7 +29,7 @@ function JwtAuthProvider(props: FuseAuthProviderComponentProps) {
 		const currentProvider = localStorage.getItem('fuseReactAuthProvider');
 		if (currentProvider !== 'jwt') {
 			localStorage.setItem('fuseReactAuthProvider', 'jwt');
-			console.log('JWT Auth Provider: Set auth provider to jwt');
+			console.error('JWT Auth Provider: Set auth provider to jwt');
 		}
 	}, []);
 
@@ -48,7 +48,7 @@ function JwtAuthProvider(props: FuseAuthProviderComponentProps) {
 		user: null
 	});
 
-	console.log('JWT Auth Provider: Current auth state:', authState);
+	// console.error('JWT Auth Provider: Current auth state:', authState);
 
 	/**
 	 * Watch for changes in the auth state
@@ -66,10 +66,10 @@ function JwtAuthProvider(props: FuseAuthProviderComponentProps) {
 	useEffect(() => {
 		const attemptAutoLogin = async () => {
 			const accessToken = tokenStorageValue;
-			console.log('JWT Auth Provider: Attempting auto-login with token:', !!accessToken);
+			// console.error('JWT Auth Provider: Attempting auto-login with token:', !!accessToken);
 
 			if (isTokenValid(accessToken)) {
-				console.log('JWT Auth Provider: Token is valid, attempting sign-in with token');
+				// console.error('JWT Auth Provider: Token is valid, attempting sign-in with token');
 				try {
 					/**
 					 * Sign in with the token
@@ -82,7 +82,7 @@ function JwtAuthProvider(props: FuseAuthProviderComponentProps) {
 					}
 
 					const userData = (await response.json()) as User;
-					console.log('JWT Auth Provider: Auto-login successful for user:', userData.firstName);
+					// console.error('JWT Auth Provider: Auto-login successful for user:', userData.firstName);
 
 					return userData;
 				} catch (error) {
@@ -90,7 +90,7 @@ function JwtAuthProvider(props: FuseAuthProviderComponentProps) {
 					return false;
 				}
 			} else {
-				console.log('JWT Auth Provider: No valid token found for auto-login');
+				// console.error('JWT Auth Provider: No valid token found for auto-login');
 			}
 
 			return false;
@@ -98,7 +98,7 @@ function JwtAuthProvider(props: FuseAuthProviderComponentProps) {
 
 		// Only run auto-login if we're in configuring state
 		if (authState.authStatus === 'configuring') {
-			console.log('JWT Auth Provider: Auth state is configuring, attempting auto-login');
+			// console.error('JWT Auth Provider: Auth state is configuring, attempting auto-login');
 			attemptAutoLogin().then((userData) => {
 				if (userData) {
 					// Create displayName from firstName and lastName
@@ -109,7 +109,7 @@ function JwtAuthProvider(props: FuseAuthProviderComponentProps) {
 						role: userData.role
 					};
 
-					console.log('JWT Auth Provider: Setting auto-login authenticated state');
+					// console.error('JWT Auth Provider: Setting auto-login authenticated state');
 					setAuthState({
 						authStatus: 'authenticated',
 						isAuthenticated: true,
@@ -120,7 +120,7 @@ function JwtAuthProvider(props: FuseAuthProviderComponentProps) {
 						setAuthToken(tokenStorageValue);
 					}
 				} else {
-					console.log('JWT Auth Provider: Auto-login failed, setting unauthenticated state');
+					// console.error('JWT Auth Provider: Auto-login failed, setting unauthenticated state');
 					removeTokenStorageValue();
 					removeAuthToken();
 					setAuthState({
@@ -139,11 +139,11 @@ function JwtAuthProvider(props: FuseAuthProviderComponentProps) {
 	 */
 	const signIn: JwtAuthContextType['signIn'] = useCallback(
 		async (credentials) => {
-			console.log('JWT Auth Provider: Signing in with credentials:', { firstName: credentials.firstName, password: '***' });
+			// console.error('JWT Auth Provider: Signing in with credentials:', { firstName: credentials.firstName, password: '***' });
 			
 			const response = await authSignIn(credentials);
 
-			console.log('JWT Auth Provider: Sign in response status:', response.status);
+			// console.error('JWT Auth Provider: Sign in response status:', response.status);
 
 			if (!response.ok) {
 				console.error('JWT Auth Provider: Sign in failed with status:', response.status);
@@ -156,11 +156,11 @@ function JwtAuthProvider(props: FuseAuthProviderComponentProps) {
 				token: string;
 			};
 
-			console.log('JWT Auth Provider: Sign in response data:', { 
-				success: session.success, 
-				user: session.user?.firstName, 
-				hasToken: !!session.token 
-			});
+			// console.error('JWT Auth Provider: Sign in response data:', { 
+			//	success: session.success, 
+			//	user: session.user?.firstName, 
+			//	hasToken: !!session.token 
+			// });
 
 			if (session && session.success) {
 				// Create displayName from firstName and lastName
@@ -171,8 +171,8 @@ function JwtAuthProvider(props: FuseAuthProviderComponentProps) {
 					role: session.user.role
 				};
 
-				console.log('JWT Auth Provider: Setting authenticated state for user:', user.displayName);
-				console.log('JWT Auth Provider: User data:', user);
+				// console.error('JWT Auth Provider: Setting authenticated state for user:', user.displayName);
+				// console.error('JWT Auth Provider: User data:', user);
 
 				setAuthState({
 					authStatus: 'authenticated',
@@ -182,7 +182,7 @@ function JwtAuthProvider(props: FuseAuthProviderComponentProps) {
 				setTokenStorageValue(session.token);
 				setAuthToken(session.token);
 				
-				console.log('JWT Auth Provider: Auth state updated successfully');
+				// console.error('JWT Auth Provider: Auth state updated successfully');
 			} else {
 				console.error('JWT Auth Provider: Sign in failed - no success in session or session is null');
 				console.error('JWT Auth Provider: Session data:', session);
