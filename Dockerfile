@@ -10,13 +10,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-<<<<<<< HEAD
-# Install dependencies
-RUN npm install
-=======
 # Install dependencies with error handling
 RUN npm install --legacy-peer-deps --ignore-engines --ignore-scripts --no-audit --no-fund
->>>>>>> 0cd4e2208c2cf9450378d8ef4bff45561d87d1e9
 
 # Copy source code
 COPY . .
