@@ -5,7 +5,7 @@ console.log('Environment variables:', {
 	MODE: import.meta?.env?.MODE
 });
 
-export const API_BASE_URL = (import.meta?.env?.VITE_API_BASE_URL as string) || 'http://localhost:5000';
+export const API_BASE_URL = 'http://134.209.121.112:5000';
 console.log('Final API_BASE_URL:', API_BASE_URL);
 
 // Define the types for options and configuration
