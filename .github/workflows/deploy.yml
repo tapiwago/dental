@@ -1,0 +1,160 @@
+name: Frontend CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22.x'
+
+    - name: Install dependencies
+      run: npm install --legacy-peer-deps
+
+    - name: Lint
+      run: |
+        if [ -f package.json ] && grep -q 'lint' package.json; then npm run lint; else echo "No lint script"; fi
+
+    - name: Build
+      run: npm run build
+
+    - name: Test build output
+      run: |
+        if [ -d "dist" ]; then
+          echo "Build successful - dist directory created"
+          ls -la dist/
+        else
+          echo "Build failed - no dist directory found"
+          exit 1
+        fi
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.DENTAL_DEPLOY_KEY }}
+          known_hosts: '134.209.121.112'
+
+      - name: Add server to known_hosts
+        run: ssh-keyscan -H 134.209.121.112 >> ~/.ssh/known_hosts
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+
+      - name: Install dependencies and build
+        run: |
+          npm install --legacy-peer-deps
+          npm run build
+
+      - name: Deploy to DigitalOcean
+        env:
+          REACT_APP_API_URL: "http://134.209.121.112:5000"
+        run: |
+          ssh root@134.209.121.112 << 'EOF'
+            set -e
+            
+            # Clone or update frontend repository
+            if [ ! -d /root/dental-frontend ]; then
+              git clone https://github.com/tapiwago/dental.git /root/dental-frontend
+            else
+              cd /root/dental-frontend && git pull origin main
+            fi
+            
+            cd /root/dental-frontend
+            
+            # Create environment file
+            echo "REACT_APP_API_URL=http://134.209.121.112:5000" > .env.production
+            echo "NODE_ENV=production" >> .env.production
+            
+            # Install dependencies and build
+            npm install --legacy-peer-deps
+            npm run build
+            
+            # Install nginx if not present
+            apt-get update
+            apt-get install -y nginx
+            
+            # Copy build files to nginx
+            rm -rf /var/www/html/*
+            cp -r dist/* /var/www/html/
+            
+            # Create nginx configuration
+            cat > /etc/nginx/sites-available/dental-frontend << 'NGINXEOF'
+          server {
+              listen 80;
+              server_name _;
+              root /var/www/html;
+              index index.html;
+
+              # Handle client-side routing
+              location / {
+                  try_files $uri $uri/ /index.html;
+              }
+
+              # API proxy
+              location /api/ {
+                  proxy_pass http://localhost:5000/;
+                  proxy_http_version 1.1;
+                  proxy_set_header Upgrade $http_upgrade;
+                  proxy_set_header Connection 'upgrade';
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+                  proxy_cache_bypass $http_upgrade;
+              }
+
+              # Security headers
+              add_header X-Frame-Options "SAMEORIGIN" always;
+              add_header X-XSS-Protection "1; mode=block" always;
+              add_header X-Content-Type-Options "nosniff" always;
+              add_header Referrer-Policy "no-referrer-when-downgrade" always;
+
+              # Gzip compression
+              gzip on;
+              gzip_vary on;
+              gzip_min_length 1024;
+              gzip_types text/plain text/css text/xml text/javascript application/javascript;
+          }
+          NGINXEOF
+            
+            # Enable site and restart nginx
+            ln -sf /etc/nginx/sites-available/dental-frontend /etc/nginx/sites-enabled/
+            rm -f /etc/nginx/sites-enabled/default
+            nginx -t && systemctl reload nginx
+            systemctl enable nginx
+            
+            echo "Frontend deployment completed successfully!"
+          EOF
+
+      - name: Health check
+        run: |
+          sleep 10
+          curl -f http://134.209.121.112/ || echo "Frontend health check failed"
+          curl -f http://134.209.121.112/api/health || echo "API health check failed"
+
+      - name: Health check
+        run: |
+          sleep 10
+          curl -f http://134.209.121.112/ || echo "Frontend health check failed"
+          curl -f http://134.209.121.112/api/health || echo "API health check failed"
