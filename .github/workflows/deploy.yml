@@ -51,7 +51,10 @@ jobs:
             if [ ! -d /root/dental-frontend ]; then
               git clone https://github.com/tapiwago/dental.git /root/dental-frontend
             else
-              cd /root/dental-frontend && git pull origin main
+              cd /root/dental-frontend
+              git reset --hard HEAD
+              git clean -fd
+              git pull origin main
             fi
             cd /root/dental-frontend
             cp public/config.production.json public/config.json
