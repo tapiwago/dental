@@ -1,5 +1,12 @@
 // Use the environment variable directly, with fallback to localhost:5000
+console.log('Environment variables:', {
+	VITE_API_BASE_URL: import.meta?.env?.VITE_API_BASE_URL,
+	NODE_ENV: import.meta?.env?.NODE_ENV,
+	MODE: import.meta?.env?.MODE
+});
+
 export const API_BASE_URL = (import.meta?.env?.VITE_API_BASE_URL as string) || 'http://localhost:5000';
+console.log('Final API_BASE_URL:', API_BASE_URL);
 
 // Define the types for options and configuration
 type FetchOptions = RequestInit & {
