@@ -46,7 +46,7 @@ jobs:
 
       - name: Deploy to DigitalOcean
         env:
-          REACT_APP_API_URL: "http://134.209.121.112:5000"
+          REACT_APP_API_URL: "http://10.116.0.2:5000"
         run: |
           ssh root@134.209.121.112 << 'EOF'
             set -e
@@ -56,7 +56,7 @@ jobs:
               cd /root/dental-frontend && git pull origin main
             fi
             cd /root/dental-frontend
-            echo "VITE_API_BASE_URL=http://134.209.121.112:5000/api" > .env.production
+            echo "VITE_API_BASE_URL=http://10.116.0.2:5000/api" > .env.production
             echo "NODE_ENV=production" >> .env.production
             npm install --legacy-peer-deps
             npm run build
@@ -90,4 +90,6 @@ jobs:
             rm -f /etc/nginx/sites-enabled/default
             nginx -t && systemctl reload nginx
             systemctl enable nginx
+            echo "🚀 Deployment completed successfully!"
+            echo "Live site URL: http://134.209.121.112"
           EOF
