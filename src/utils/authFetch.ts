@@ -250,6 +250,10 @@ export const stageApi = {
   },
   getById: (id: string) => authGet(`/api/stages/${id}`, { requireAuth: true }),
   create: (stageData: any) => authPost('/api/stages', stageData, { requireAuth: true }),
+  createMultiple: (data: { stages: any[], onboardingCase: string }) => 
+    authPost('/api/stages/multiple', data, { requireAuth: true }),
+  createWithTasks: (data: { stages: any[], onboardingCase: string }) => 
+    authPost('/api/stages/with-tasks', data, { requireAuth: true }),
   update: (id: string, stageData: any) => authPut(`/api/stages/${id}`, stageData, { requireAuth: true }),
   delete: (id: string) => authDelete(`/api/stages/${id}`, { requireAuth: true })
 };
@@ -261,6 +265,10 @@ export const taskApi = {
   },
   getById: (id: string) => authGet(`/api/tasks/${id}`, { requireAuth: true }),
   create: (taskData: any) => authPost('/api/tasks', taskData, { requireAuth: true }),
+  createMultiple: (data: { tasks: any[], stage: string, onboardingCase: string }) => 
+    authPost('/api/tasks/multiple', data, { requireAuth: true }),
+  addMultipleToStage: (stageId: string, data: { tasks: any[], createdBy?: string }) => 
+    authPost(`/api/tasks/stage/${stageId}/add-multiple`, data, { requireAuth: true }),
   update: (id: string, taskData: any) => authPut(`/api/tasks/${id}`, taskData, { requireAuth: true }),
   delete: (id: string) => authDelete(`/api/tasks/${id}`, { requireAuth: true }),
   updateStatus: (id: string, status: string) => authPut(`/api/tasks/${id}/status`, { status }, { requireAuth: true }),

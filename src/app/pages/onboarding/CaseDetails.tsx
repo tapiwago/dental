@@ -13,19 +13,24 @@ import {
 	Button,
 	CircularProgress,
 	Alert,
-	ButtonGroup
+	ButtonGroup,
+	IconButton,
+	Menu,
+	MenuItem
 } from '@mui/material';
 import { 
 	ArrowBack as ArrowBackIcon,
 	Add as AddIcon,
-	FileDownload as ImportIcon
+	FileDownload as ImportIcon,
+	MoreVert as MoreVertIcon
 } from '@mui/icons-material';
 import { useParams } from 'react-router';
 import useNavigate from '@fuse/hooks/useNavigate';
 import { onboardingApi, fetchJson } from '@/utils/authFetch';
-import ImportTemplateDialog from './ImportTemplateDialog';
+import ImportTemplateDialog from './ImportTemplateDialogNew';
 import AddStageDialog from './AddStageDialog';
 import AddTaskDialog from './AddTaskDialog';
+import AddTasksToStageDialog from './AddTasksToStageDialog';
 
 interface CaseDetails {
 	_id: string;
@@ -120,6 +125,9 @@ function CaseDetails() {
 	const [importDialogOpen, setImportDialogOpen] = useState(false);
 	const [addStageDialogOpen, setAddStageDialogOpen] = useState(false);
 	const [addTaskDialogOpen, setAddTaskDialogOpen] = useState(false);
+	const [addTasksToStageDialogOpen, setAddTasksToStageDialogOpen] = useState(false);
+	const [selectedStageId, setSelectedStageId] = useState<string>('');
+	const [selectedStageName, setSelectedStageName] = useState<string>('');
 	const [importType, setImportType] = useState<'workflow' | 'stage' | 'task'>('workflow');
 
 	useEffect(() => {
@@ -194,6 +202,18 @@ function CaseDetails() {
 		// Refresh case details after task creation
 		fetchCaseDetails();
 		setAddTaskDialogOpen(false);
+	};
+
+	const handleOpenAddTasksToStage = (stageId: string, stageName: string) => {
+		setSelectedStageId(stageId);
+		setSelectedStageName(stageName);
+		setAddTasksToStageDialogOpen(true);
+	};
+
+	const handleTasksAddedToStage = () => {
+		// Refresh case details after tasks are added to stage
+		fetchCaseDetails();
+		setAddTasksToStageDialogOpen(false);
 	};
 
 	if (loading) {
@@ -504,6 +524,16 @@ function CaseDetails() {
 												</Box>
 											}
 										/>
+										<Box className="ml-auto">
+											<Button
+												size="small"
+												variant="outlined"
+												startIcon={<AddIcon />}
+												onClick={() => handleOpenAddTasksToStage(stage._id, stage.name)}
+											>
+												Add Tasks
+											</Button>
+										</Box>
 									</ListItem>
 								))}
 							</List>
@@ -662,7 +692,6 @@ function CaseDetails() {
 				onClose={() => setImportDialogOpen(false)}
 				onSuccess={handleImportSuccess}
 				caseId={caseDetails._id}
-				importType={importType}
 			/>
 
 			{/* Add Stage Dialog */}
@@ -679,6 +708,16 @@ function CaseDetails() {
 				onClose={() => setAddTaskDialogOpen(false)}
 				onSuccess={handleTaskCreated}
 				caseId={caseDetails._id}
+			/>
+
+			{/* Add Tasks to Stage Dialog */}
+			<AddTasksToStageDialog
+				open={addTasksToStageDialogOpen}
+				onClose={() => setAddTasksToStageDialogOpen(false)}
+				onSuccess={handleTasksAddedToStage}
+				caseId={caseDetails._id}
+				stageId={selectedStageId}
+				stageName={selectedStageName}
 			/>
 		</div>
 	);

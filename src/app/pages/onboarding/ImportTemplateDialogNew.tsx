@@ -56,7 +56,16 @@ interface Template {
 	name: string;
 	description: string;
 	type: string;
+	estimatedDuration?: number;
+	isRequired?: boolean;
 	configuration?: {
+		tasks?: Array<{
+			name: string;
+			description: string;
+			priority: string;
+			estimatedHours: number;
+			isRequired?: boolean;
+		}>;
 		defaultStages?: Array<{
 			name: string;
 			description: string;
@@ -92,36 +101,37 @@ const ImportTemplateDialog: React.FC<ImportTemplateDialogProps> = ({
 	const fetchWorkflowStages = async () => {
 		setLoading(true);
 		setError(null);
+		console.log('Fetching workflow stages...');
+		
 		try {
 			// Fetch all templates
 			const response = await templateApi.getAll();
 			const data = await fetchJson(response);
-			
 			console.log('API Response:', data);
 			
 			// Handle different response structures
 			const templates = data.templates || data || [];
 			console.log('All templates:', templates);
-			console.log('Template types found:', templates.map((t: Template) => t.type));
 			
-			// Filter for Stage type templates only
+			// Filter for Stage type templates
 			const stageTemplates = templates.filter(
 				(template: Template) => template.type === 'Stage'
 			);
-			console.log('Stage templates:', stageTemplates);
+			console.log('Stage templates found:', stageTemplates);
 
-			// Convert each stage template to a WorkflowStage
-			const stages: WorkflowStage[] = stageTemplates.map((template: Template, index: number) => ({
+			// Convert Stage templates to WorkflowStage format
+			const stages: WorkflowStage[] = stageTemplates.map((template: Template) => ({
 				id: template._id,
 				name: template.name,
 				description: template.description || '',
-				sequence: index + 1, // Default sequence
-				workflowName: 'Stage Templates', // Group all under one category
-				tasks: template.configuration?.defaultStages?.[0]?.tasks || [] // Get tasks if available
+				sequence: 1, // Default sequence, will be adjusted when importing
+				workflowName: 'Stage Templates',
+				estimatedDuration: template.estimatedDuration,
+				isRequired: template.isRequired,
+				tasks: template.configuration?.tasks || []
 			}));
 
 			console.log('Converted stages:', stages);
-
 			setWorkflowStages(stages);
 		} catch (err) {
 			console.error('Error fetching workflow stages:', err);
@@ -147,71 +157,43 @@ const ImportTemplateDialog: React.FC<ImportTemplateDialogProps> = ({
 
 		setLoading(true);
 		setError(null);
+		console.log('Starting import for selected stages:', selectedStages);
 
 		try {
-			// Get current highest sequence number for the case
-			const params = new URLSearchParams();
-			params.append('onboardingCase', caseId);
-			const existingStagesResponse = await stageApi.getAll(params);
-			const existingStagesData = await fetchJson(existingStagesResponse);
-			
-			let maxSequence = 0;
-			if (existingStagesData && Array.isArray(existingStagesData)) {
-				maxSequence = Math.max(0, ...existingStagesData.map((stage: any) => stage.sequence || 0));
-			}
-
-			// Import selected stages
-			for (const stageId of selectedStages) {
+			// Prepare stages data for the new bulk endpoint
+			const stagesToImport = selectedStages.map(stageId => {
 				const stageTemplate = workflowStages.find(s => s.id === stageId);
-				if (!stageTemplate) {
-					console.log('Stage template not found for ID:', stageId);
-					continue;
-				}
+				if (!stageTemplate) return null;
 
-				maxSequence += 1;
-				console.log('Creating stage from template:', stageTemplate);
-
-				const stageData = {
+				return {
 					name: stageTemplate.name,
 					description: stageTemplate.description,
-					sequence: maxSequence,
-					onboardingCase: caseId,
-					status: 'pending',
 					createdBy: currentUser?.id || currentUser?._id,
 					estimatedDuration: stageTemplate.estimatedDuration || 0,
-					isRequired: stageTemplate.isRequired || true
+					isRequired: stageTemplate.isRequired !== false,
+					tasks: stageTemplate.tasks.map(task => ({
+						name: task.name,
+						description: task.description,
+						priority: task.priority || 'Medium', // Use proper enum value
+						estimatedHours: task.estimatedHours || 1,
+						createdBy: currentUser?.id || currentUser?._id,
+						isRequired: task.isRequired !== false
+					}))
 				};
+			}).filter(Boolean); // Remove null entries
 
-				console.log('Creating stage with data:', stageData);
-				const stageResponse = await stageApi.create(stageData);
-				const createdStage = await fetchJson(stageResponse);
-				console.log('Created stage:', createdStage);
-				
-				if (createdStage && stageTemplate.tasks?.length > 0) {
-					console.log('Creating tasks for stage:', stageTemplate.tasks);
-					// Import tasks for this stage
-					for (let taskIndex = 0; taskIndex < stageTemplate.tasks.length; taskIndex++) {
-						const task = stageTemplate.tasks[taskIndex];
-						
-						const taskData = {
-							name: task.name,
-							description: task.description,
-							priority: task.priority || 'medium',
-							status: 'pending',
-							sequence: taskIndex + 1,
-							stage: createdStage._id,
-							onboardingCase: caseId,
-							estimatedHours: task.estimatedHours || 1,
-							createdBy: currentUser?.id || currentUser?._id,
-							isRequired: task.isRequired || true
-						};
+			console.log('Stages to import:', stagesToImport);
 
-						console.log('Creating task with data:', taskData);
-						await taskApi.create(taskData);
-					}
-				}
-			}
+			// Use the new bulk endpoint to create stages with tasks
+			const response = await stageApi.createWithTasks({
+				stages: stagesToImport,
+				onboardingCase: caseId
+			});
 
+			const result = await fetchJson(response);
+			console.log('Import result:', result);
+
+			console.log('Import completed successfully');
 			onSuccess();
 			onClose();
 		} catch (err) {
@@ -237,16 +219,12 @@ const ImportTemplateDialog: React.FC<ImportTemplateDialogProps> = ({
 		return acc;
 	}, {} as Record<string, WorkflowStage[]>);
 
-	console.log('Workflow stages:', workflowStages);
-	console.log('Grouped stages:', groupedStages);
-	console.log('Number of grouped workflow keys:', Object.keys(groupedStages).length);
-
 	return (
 		<Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
 			<DialogTitle>
-				Import Workflow Stages
+				Import Stage Templates
 				<Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-					Select individual stages from workflow templates to add to your onboarding case
+					Select stage templates to add to your onboarding case
 				</Typography>
 			</DialogTitle>
 			
@@ -265,7 +243,7 @@ const ImportTemplateDialog: React.FC<ImportTemplateDialogProps> = ({
 					<Box>
 						{Object.keys(groupedStages).length === 0 ? (
 							<Typography variant="body2" color="textSecondary" textAlign="center" py={3}>
-								No workflow stages available to import
+								No stage templates available to import
 							</Typography>
 						) : (
 							Object.entries(groupedStages).map(([workflowName, stages]) => (
