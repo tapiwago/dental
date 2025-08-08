@@ -89,10 +89,12 @@ interface CaseDetails {
 	tasks?: Array<{
 		_id: string;
 		title: string;
+		name?: string; // Alternative field name from backend
 		description?: string;
 		status: string;
 		priority: string;
 		dueDate?: string;
+		stageId?: string; // Link to stage
 		assignedTo?: {
 			_id: string;
 			firstName: string;
@@ -210,6 +212,19 @@ function CaseDetails() {
 		setAddTasksToStageDialogOpen(true);
 	};
 
+	// Helper function to group tasks by stage
+	const getTasksForStage = (stageId: string) => {
+		if (!caseDetails?.tasks) return [];
+		return caseDetails.tasks.filter(task => task.stageId === stageId);
+	};
+
+	// Helper function to get unassigned tasks (tasks without a stage or with invalid stageId)
+	const getUnassignedTasks = () => {
+		if (!caseDetails?.tasks || !caseDetails?.stages) return caseDetails?.tasks || [];
+		const stageIds = caseDetails.stages.map(stage => stage._id);
+		return caseDetails.tasks.filter(task => !task.stageId || !stageIds.includes(task.stageId));
+	};
+
 	const handleTasksAddedToStage = () => {
 		// Refresh case details after tasks are added to stage
 		fetchCaseDetails();
@@ -295,149 +310,208 @@ function CaseDetails() {
 				</Box>
 			</Box>
 
-			<Box className="grid grid-cols-1 md:grid-cols-2 gap-16">
-				{/* Case Information */}
-				<Card>
-					<CardContent className="p-5">
-						<Typography variant="h6" className="mb-12">
-							Case Information
-						</Typography>
-						<Box className="space-y-8">
-							<Box>
-								<Typography variant="body2" color="text.secondary">
+			{/* Modern Case & Client Overview */}
+			<Box className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-16">
+				{/* Case Summary Card */}
+				<Card className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200">
+					<CardContent className="p-6">
+						<Box className="flex items-center mb-4">
+							<Box className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center mr-3">
+								<Typography variant="h6" className="text-white font-bold">
+									📋
+								</Typography>
+							</Box>
+							<Typography variant="h6" className="font-bold text-blue-800">
+								Case Overview
+							</Typography>
+						</Box>
+						
+						<Box className="space-y-3">
+							<Box className="bg-white rounded-lg p-3 shadow-sm">
+								<Typography variant="caption" className="text-blue-600 font-medium block">
 									Case ID
 								</Typography>
-								<Typography variant="body1">
+								<Typography variant="body1" className="font-bold text-gray-800">
 									{caseDetails.caseId}
 								</Typography>
 							</Box>
-							<Box>
-								<Typography variant="body2" color="text.secondary">
-									Progress
+							
+							<Box className="bg-white rounded-lg p-3 shadow-sm">
+								<Typography variant="caption" className="text-blue-600 font-medium block">
+									Timeline
 								</Typography>
-								<Box className="flex items-center gap-8 mt-2">
-									<Box className="w-150 h-6 bg-gray-200 rounded-full overflow-hidden">
-										<Box
-											className="h-full bg-blue-500"
-											style={{ width: `${caseDetails.progress}%` }}
-										/>
-									</Box>
-									<Typography variant="body2">
+								<Typography variant="body2" className="text-gray-700">
+									Started: {new Date(caseDetails.startDate).toLocaleDateString()}
+								</Typography>
+								{caseDetails.expectedCompletionDate && (
+									<Typography variant="body2" className="text-gray-700">
+										Due: {new Date(caseDetails.expectedCompletionDate).toLocaleDateString()}
+									</Typography>
+								)}
+							</Box>
+							
+							<Box className="bg-white rounded-lg p-3 shadow-sm">
+								<Box className="flex items-center justify-between mb-2">
+									<Typography variant="caption" className="text-blue-600 font-medium">
+										Progress
+									</Typography>
+									<Typography variant="caption" className="font-bold text-blue-700">
 										{caseDetails.progress}%
 									</Typography>
 								</Box>
+								<Box className="w-full h-3 bg-blue-200 rounded-full overflow-hidden">
+									<Box
+										className="h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-300"
+										style={{ width: `${caseDetails.progress}%` }}
+									/>
+								</Box>
 							</Box>
-							<Box>
-								<Typography variant="body2" color="text.secondary">
-									Start Date
-								</Typography>
-								<Typography variant="body1">
-									{new Date(caseDetails.startDate).toLocaleDateString()}
-								</Typography>
-							</Box>
-							{caseDetails.expectedCompletionDate && (
-								<Box>
-									<Typography variant="body2" color="text.secondary">
-										Expected Completion
-									</Typography>
-									<Typography variant="body1">
-										{new Date(caseDetails.expectedCompletionDate).toLocaleDateString()}
-									</Typography>
-								</Box>
-							)}
-							{caseDetails.actualCompletionDate && (
-								<Box>
-									<Typography variant="body2" color="text.secondary">
-										Actual Completion
-									</Typography>
-									<Typography variant="body1">
-										{new Date(caseDetails.actualCompletionDate).toLocaleDateString()}
-									</Typography>
-								</Box>
-							)}
-							<Box>
-								<Typography variant="body2" color="text.secondary">
-									Assigned Champion
-								</Typography>
-								<Typography variant="body1">
-									{caseDetails.assignedChampion.firstName} {caseDetails.assignedChampion.lastName}
-								</Typography>
-								<Typography variant="caption" color="text.secondary">
-									{caseDetails.assignedChampion.email}
-								</Typography>
-							</Box>
-							{caseDetails.notes && (
-								<Box>
-									<Typography variant="body2" color="text.secondary">
-										Notes
-									</Typography>
-									<Typography variant="body1">
-										{caseDetails.notes}
-									</Typography>
-								</Box>
-							)}
-							{caseDetails.tags && caseDetails.tags.length > 0 && (
-								<Box>
-									<Typography variant="body2" color="text.secondary" className="mb-6">
-										Tags
-									</Typography>
-									<Box className="flex flex-wrap gap-4">
-										{caseDetails.tags.map((tag, index) => (
-											<Chip key={index} label={tag} size="small" variant="outlined" />
-										))}
-									</Box>
-								</Box>
-							)}
 						</Box>
 					</CardContent>
 				</Card>
 
-				{/* Client Information */}
-				<Card>
-					<CardContent className="p-5">
-						<Typography variant="h6" className="mb-12">
-							Client Information
-						</Typography>
-						<Box className="space-y-8">
-							<Box>
-								<Typography variant="body2" color="text.secondary">
-									Name
+				{/* Client Info Card */}
+				<Card className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200">
+					<CardContent className="p-6">
+						<Box className="flex items-center mb-4">
+							<Box className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center mr-3">
+								<Typography variant="h6" className="text-white font-bold">
+									👤
 								</Typography>
-								<Typography variant="body1">
+							</Box>
+							<Typography variant="h6" className="font-bold text-green-800">
+								Client Details
+							</Typography>
+						</Box>
+						
+						<Box className="space-y-3">
+							<Box className="bg-white rounded-lg p-3 shadow-sm">
+								<Typography variant="caption" className="text-green-600 font-medium block">
+									Client Name
+								</Typography>
+								<Typography variant="body1" className="font-bold text-gray-800">
 									{caseDetails.clientId.name}
 								</Typography>
 							</Box>
-							<Box>
-								<Typography variant="body2" color="text.secondary">
-									Email
+							
+							<Box className="bg-white rounded-lg p-3 shadow-sm">
+								<Typography variant="caption" className="text-green-600 font-medium block">
+									Contact Information
 								</Typography>
-								<Typography variant="body1">
+								<Typography variant="body2" className="text-gray-700 break-words">
 									{caseDetails.clientId.email}
 								</Typography>
-							</Box>
-							{caseDetails.clientId.contactInfo?.phone && (
-								<Box>
-									<Typography variant="body2" color="text.secondary">
-										Phone
+								{caseDetails.clientId.contactInfo?.phone && (
+									<Typography variant="body2" className="text-gray-700">
+										📞 {caseDetails.clientId.contactInfo.phone}
 									</Typography>
-									<Typography variant="body1">
-										{caseDetails.clientId.contactInfo.phone}
+								)}
+								{caseDetails.clientId.contactInfo?.address && (
+									<Typography variant="body2" className="text-gray-700">
+										📍 {[
+											caseDetails.clientId.contactInfo.address.city,
+											caseDetails.clientId.contactInfo.address.state,
+											caseDetails.clientId.contactInfo.address.country
+										].filter(Boolean).join(', ')}
+									</Typography>
+								)}
+							</Box>
+						</Box>
+					</CardContent>
+				</Card>
+
+				{/* Assignment & Status Card */}
+				<Card className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200">
+					<CardContent className="p-6">
+						<Box className="flex items-center mb-4">
+							<Box className="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center mr-3">
+								<Typography variant="h6" className="text-white font-bold">
+									🏆
+								</Typography>
+							</Box>
+							<Typography variant="h6" className="font-bold text-purple-800">
+								Assignment & Status
+							</Typography>
+						</Box>
+						
+						<Box className="space-y-3">
+							<Box className="bg-white rounded-lg p-3 shadow-sm">
+								<Typography variant="caption" className="text-purple-600 font-medium block">
+									Assigned Champion
+								</Typography>
+								<Typography variant="body1" className="font-bold text-gray-800">
+									{caseDetails.assignedChampion.firstName} {caseDetails.assignedChampion.lastName}
+								</Typography>
+								<Typography variant="caption" className="text-gray-600">
+									{caseDetails.assignedChampion.email}
+								</Typography>
+							</Box>
+							
+							<Box className="bg-white rounded-lg p-3 shadow-sm">
+								<Typography variant="caption" className="text-purple-600 font-medium block mb-2">
+									Current Status
+								</Typography>
+								<Box className="flex flex-wrap gap-2">
+									<Chip
+										label={caseDetails.status}
+										color={getStatusColor(caseDetails.status) as any}
+										size="small"
+										className="font-medium"
+									/>
+									<Chip
+										label={caseDetails.priority}
+										color={getPriorityColor(caseDetails.priority) as any}
+										size="small"
+										className="font-medium"
+									/>
+								</Box>
+							</Box>
+							
+							{(caseDetails.tags && caseDetails.tags.length > 0) && (
+								<Box className="bg-white rounded-lg p-3 shadow-sm">
+									<Typography variant="caption" className="text-purple-600 font-medium block mb-2">
+										Tags
+									</Typography>
+									<Box className="flex flex-wrap gap-1">
+										{caseDetails.tags.slice(0, 3).map((tag, index) => (
+											<Chip 
+												key={index} 
+												label={tag} 
+												size="small" 
+												variant="outlined" 
+												className="text-xs"
+											/>
+										))}
+										{caseDetails.tags.length > 3 && (
+											<Chip 
+												label={`+${caseDetails.tags.length - 3} more`} 
+												size="small" 
+												variant="outlined" 
+												className="text-xs"
+											/>
+										)}
+									</Box>
+								</Box>
+							)}
+							
+							{caseDetails.notes && (
+								<Box className="bg-white rounded-lg p-3 shadow-sm">
+									<Typography variant="caption" className="text-purple-600 font-medium block mb-1">
+										Notes
+									</Typography>
+									<Typography variant="body2" className="text-gray-700 text-sm leading-relaxed">
+										{caseDetails.notes.length > 100 ? `${caseDetails.notes.substring(0, 100)}...` : caseDetails.notes}
 									</Typography>
 								</Box>
 							)}
-							{caseDetails.clientId.contactInfo?.address && (
-								<Box>
-									<Typography variant="body2" color="text.secondary">
-										Address
+							
+							{caseDetails.actualCompletionDate && (
+								<Box className="bg-white rounded-lg p-3 shadow-sm">
+									<Typography variant="caption" className="text-purple-600 font-medium block">
+										Completed Date
 									</Typography>
-									<Typography variant="body1">
-										{[
-											caseDetails.clientId.contactInfo.address.street,
-											caseDetails.clientId.contactInfo.address.city,
-											caseDetails.clientId.contactInfo.address.state,
-											caseDetails.clientId.contactInfo.address.zipCode,
-											caseDetails.clientId.contactInfo.address.country
-										].filter(Boolean).join(', ')}
+									<Typography variant="body2" className="text-gray-700">
+										✅ {new Date(caseDetails.actualCompletionDate).toLocaleDateString()}
 									</Typography>
 								</Box>
 							)}
@@ -445,6 +519,9 @@ function CaseDetails() {
 					</CardContent>
 				</Card>
 			</Box>
+
+			{/* Horizontal Divider */}
+			<Divider className="my-24" />
 
 			{/* Additional sections */}
 			<Box className="space-y-16 mt-16">
@@ -469,13 +546,13 @@ function CaseDetails() {
 					</Card>
 				)}
 
-				{/* Stages */}
+				{/* Stages with Nested Tasks */}
 				{caseDetails.stages && caseDetails.stages.length > 0 ? (
 					<Card>
 						<CardContent className="p-5">
 							<Box className="flex items-center justify-between mb-12">
 								<Typography variant="h6">
-									Stages
+									Workflow Stages & Tasks
 								</Typography>
 								<ButtonGroup size="small">
 									<Button
@@ -498,45 +575,188 @@ function CaseDetails() {
 									</Button>
 								</ButtonGroup>
 							</Box>
-							<List dense>
-								{caseDetails.stages.map((stage) => (
-									<ListItem key={stage._id} divider>
-										<ListItemText
-											primary={`${stage.sequence}. ${stage.name}`}
-											secondary={
-												<Box>
-													{stage.description && (
-														<Typography variant="body2">
-															{stage.description}
-														</Typography>
-													)}
-													<Box className="flex gap-8 mt-2">
+
+							{/* Stages with nested tasks */}
+							<Box className="space-y-16">
+								{caseDetails.stages.map((stage) => {
+									const stageTasks = getTasksForStage(stage._id);
+									return (
+										<Card key={stage._id} variant="outlined" className="border-l-4 border-l-blue-500">
+											<CardContent className="p-4">
+												{/* Stage Header */}
+												<Box className="flex items-center justify-between mb-3">
+													<Box className="flex items-center gap-3">
+														<Box className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-medium">
+															{stage.sequence}
+														</Box>
+														<div>
+															<Typography variant="h6" className="text-gray-800">
+																{stage.name}
+															</Typography>
+															{stage.description && (
+																<Typography variant="body2" color="text.secondary">
+																	{stage.description}
+																</Typography>
+															)}
+														</div>
+													</Box>
+													<Box className="flex items-center gap-2">
 														<Chip
 															label={stage.status}
 															size="small"
+															color={getStatusColor(stage.status) as any}
 														/>
+														<Button
+															size="small"
+															variant="outlined"
+															startIcon={<AddIcon />}
+															onClick={() => handleOpenAddTasksToStage(stage._id, stage.name)}
+														>
+															Add Tasks
+														</Button>
 													</Box>
-													{stage.championId && (
-														<Typography variant="caption" color="text.secondary" className="mt-2">
-															Champion: {stage.championId.firstName} {stage.championId.lastName}
-														</Typography>
-													)}
 												</Box>
-											}
-										/>
-										<Box className="ml-auto">
-											<Button
-												size="small"
-												variant="outlined"
-												startIcon={<AddIcon />}
-												onClick={() => handleOpenAddTasksToStage(stage._id, stage.name)}
-											>
-												Add Tasks
-											</Button>
-										</Box>
-									</ListItem>
-								))}
-							</List>
+
+												{stage.championId && (
+													<Typography variant="caption" color="text.secondary" className="block mb-3">
+														Champion: {stage.championId.firstName} {stage.championId.lastName}
+													</Typography>
+												)}
+
+												{/* Stage Tasks */}
+												{stageTasks.length > 0 ? (
+													<Box className="mt-4 bg-gray-50 rounded-lg p-3">
+														<Typography variant="subtitle2" className="mb-3 text-gray-700">
+															Tasks ({stageTasks.length})
+														</Typography>
+														<Box className="space-y-2">
+															{stageTasks.map((task) => (
+																<Card key={task._id} className="bg-white shadow-sm">
+																	<CardContent className="p-3">
+																		<Box className="flex items-start justify-between">
+																			<Box className="flex-1">
+																				<Typography variant="subtitle2" className="font-medium">
+																					{task.title || task.name}
+																				</Typography>
+																				{task.description && (
+																					<Typography variant="body2" color="text.secondary" className="mt-1">
+																						{task.description}
+																					</Typography>
+																				)}
+																				<Box className="flex gap-2 mt-2">
+																					<Chip
+																						label={task.status}
+																						size="small"
+																						variant="outlined"
+																					/>
+																					<Chip
+																						label={task.priority}
+																						size="small"
+																						color={getPriorityColor(task.priority) as any}
+																					/>
+																					{task.dueDate && (
+																						<Chip
+																							label={`Due: ${new Date(task.dueDate).toLocaleDateString()}`}
+																							size="small"
+																							variant="outlined"
+																							className="text-xs"
+																						/>
+																					)}
+																				</Box>
+																				{task.assignedTo && (
+																					<Typography variant="caption" color="text.secondary" className="block mt-2">
+																						👤 {task.assignedTo.firstName} {task.assignedTo.lastName}
+																					</Typography>
+																				)}
+																			</Box>
+																		</Box>
+																	</CardContent>
+																</Card>
+															))}
+														</Box>
+													</Box>
+												) : (
+													<Box className="mt-4 p-4 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 text-center">
+														<Typography variant="body2" color="text.secondary">
+															No tasks in this stage yet
+														</Typography>
+														<Button
+															size="small"
+															variant="text"
+															startIcon={<AddIcon />}
+															onClick={() => handleOpenAddTasksToStage(stage._id, stage.name)}
+															className="mt-2"
+														>
+															Add First Task
+														</Button>
+													</Box>
+												)}
+											</CardContent>
+										</Card>
+									);
+								})}
+							</Box>
+
+							{/* Unassigned Tasks Section */}
+							{(() => {
+								const unassignedTasks = getUnassignedTasks();
+								return unassignedTasks.length > 0 ? (
+									<Card variant="outlined" className="mt-4 border-l-4 border-l-orange-500">
+										<CardContent className="p-4">
+											<Typography variant="h6" className="mb-3 text-orange-700">
+												📌 Unassigned Tasks
+											</Typography>
+											<Typography variant="body2" color="text.secondary" className="mb-3">
+												These tasks are not assigned to any stage
+											</Typography>
+											<Box className="space-y-2">
+												{unassignedTasks.map((task) => (
+													<Card key={task._id} className="bg-orange-50 border border-orange-200">
+														<CardContent className="p-3">
+															<Box className="flex items-start justify-between">
+																<Box className="flex-1">
+																	<Typography variant="subtitle2" className="font-medium">
+																		{task.title || task.name}
+																	</Typography>
+																	{task.description && (
+																		<Typography variant="body2" color="text.secondary" className="mt-1">
+																			{task.description}
+																		</Typography>
+																	)}
+																	<Box className="flex gap-2 mt-2">
+																		<Chip
+																			label={task.status}
+																			size="small"
+																			variant="outlined"
+																		/>
+																		<Chip
+																			label={task.priority}
+																			size="small"
+																			color={getPriorityColor(task.priority) as any}
+																		/>
+																		{task.dueDate && (
+																			<Chip
+																				label={`Due: ${new Date(task.dueDate).toLocaleDateString()}`}
+																				size="small"
+																				variant="outlined"
+																			/>
+																		)}
+																	</Box>
+																	{task.assignedTo && (
+																		<Typography variant="caption" color="text.secondary" className="block mt-2">
+																			👤 {task.assignedTo.firstName} {task.assignedTo.lastName}
+																		</Typography>
+																	)}
+																</Box>
+															</Box>
+														</CardContent>
+													</Card>
+												))}
+											</Box>
+										</CardContent>
+									</Card>
+								) : null;
+							})()}
 						</CardContent>
 					</Card>
 				) : (
@@ -544,7 +764,7 @@ function CaseDetails() {
 						<CardContent className="p-5">
 							<Box className="flex items-center justify-between mb-12">
 								<Typography variant="h6">
-									Stages
+									Workflow Stages & Tasks
 								</Typography>
 								<ButtonGroup size="small">
 									<Button
@@ -567,90 +787,30 @@ function CaseDetails() {
 									</Button>
 								</ButtonGroup>
 							</Box>
-							<Typography variant="body2" color="text.secondary" className="text-center py-16">
-								No stages found. Import from a template or create manually.
-							</Typography>
-						</CardContent>
-					</Card>
-				)}
-
-				{/* Tasks */}
-				{caseDetails.tasks && caseDetails.tasks.length > 0 ? (
-					<Card>
-						<CardContent className="p-5">
-							<Box className="flex items-center justify-between mb-12">
-								<Typography variant="h6">
-									Tasks
+							<Box className="text-center py-16">
+								<Typography variant="h6" color="text.secondary" className="mb-4">
+									🚀 Ready to get started?
 								</Typography>
-								<Button
-									size="small"
-									startIcon={<AddIcon />}
-									onClick={() => setAddTaskDialogOpen(true)}
-								>
-									Add Task
-								</Button>
-							</Box>
-							<List dense>
-								{caseDetails.tasks.map((task) => (
-									<ListItem key={task._id} divider>
-										<ListItemText
-											primary={task.title}
-											secondary={
-												<Box>
-													{task.description && (
-														<Typography variant="body2">
-															{task.description}
-														</Typography>
-													)}
-													<Box className="flex gap-8 mt-2">
-														<Chip
-															label={task.status}
-															size="small"
-														/>
-														<Chip
-															label={task.priority}
-															size="small"
-															color={getPriorityColor(task.priority) as any}
-														/>
-														{task.dueDate && (
-															<Chip
-																label={`Due: ${new Date(task.dueDate).toLocaleDateString()}`}
-																size="small"
-																variant="outlined"
-															/>
-														)}
-													</Box>
-													{task.assignedTo && (
-														<Typography variant="caption" color="text.secondary" className="mt-2">
-															Assigned to: {task.assignedTo.firstName} {task.assignedTo.lastName}
-														</Typography>
-													)}
-												</Box>
-											}
-										/>
-									</ListItem>
-								))}
-							</List>
-						</CardContent>
-					</Card>
-				) : (
-					<Card>
-						<CardContent className="p-5">
-							<Box className="flex items-center justify-between mb-12">
-								<Typography variant="h6">
-									Tasks
+								<Typography variant="body2" color="text.secondary" className="mb-4">
+									Create your first stage or import from a template to begin organizing your workflow
 								</Typography>
-								<Button
-									size="small"
-									startIcon={<AddIcon />}
-									onClick={() => setAddTaskDialogOpen(true)}
-								>
-									Add Task
-								</Button>
+								<Box className="flex justify-center gap-2">
+									<Button
+										variant="contained"
+										startIcon={<ImportIcon />}
+										onClick={() => handleOpenImportDialog('workflow')}
+									>
+										Import Template
+									</Button>
+									<Button
+										variant="outlined"
+										startIcon={<AddIcon />}
+										onClick={() => setAddStageDialogOpen(true)}
+									>
+										Create Stage
+									</Button>
+								</Box>
 							</Box>
-							<Typography variant="body2" color="text.secondary" className="text-center py-16">
-								No tasks found. Create tasks manually or import stages with tasks from templates.
-							</Typography>
 						</CardContent>
 					</Card>
 				)}
