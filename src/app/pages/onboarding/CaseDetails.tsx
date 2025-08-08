@@ -50,7 +50,7 @@ interface CaseDetails {
 			};
 		};
 	};
-	status: 'Not Started' | 'In Progress' | 'On Hold' | 'Completed' | 'Cancelled';
+	status: 'Not Started' | 'In Progress' | 'On Hold' | 'Completed' | 'Cancelled' | 'Planning';
 	priority: 'Low' | 'Medium' | 'High' | 'Critical';
 	progress: number;
 	startDate: string;
@@ -161,6 +161,7 @@ function CaseDetails() {
 	const getStatusColor = (status: string) => {
 		const colors = {
 			'Not Started': 'default',
+			'Planning': 'info',
 			'In Progress': 'primary',
 			'On Hold': 'warning',
 			'Completed': 'success',
