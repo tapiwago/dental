@@ -276,7 +276,7 @@ function CaseDetails() {
 	return (
 		<div className="w-full p-5">
 			{/* Header */}
-			<Box className="mb-16">
+			<Box className="mb-5">
 				<Button
 					variant="outlined"
 					startIcon={<ArrowBackIcon />}
@@ -311,7 +311,7 @@ function CaseDetails() {
 			</Box>
 
 			{/* Modern Case & Client Overview */}
-			<Box className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-16">
+			<Box className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-5">
 				{/* Case Summary Card */}
 				<Card className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200">
 					<CardContent className="p-6">
