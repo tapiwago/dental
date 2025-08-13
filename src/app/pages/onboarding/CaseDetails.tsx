@@ -16,17 +16,26 @@ import {
 	ButtonGroup,
 	IconButton,
 	Menu,
-	MenuItem
+	MenuItem,
+	Dialog,
+	DialogTitle,
+	DialogContent,
+	DialogActions,
+	DialogContentText
 } from '@mui/material';
 import { 
 	ArrowBack as ArrowBackIcon,
 	Add as AddIcon,
 	FileDownload as ImportIcon,
-	MoreVert as MoreVertIcon
+	MoreVert as MoreVertIcon,
+	Delete as DeleteIcon,
+	Edit as EditIcon
 } from '@mui/icons-material';
 import { useParams } from 'react-router';
 import useNavigate from '@fuse/hooks/useNavigate';
-import { onboardingApi, fetchJson } from '@/utils/authFetch';
+import { showMessage } from '@fuse/core/FuseMessage/fuseMessageSlice';
+import { useAppDispatch } from 'src/store/hooks';
+import { onboardingApi, stageApi, taskApi, fetchJson } from '@/utils/authFetch';
 import ImportTemplateDialog from './ImportTemplateDialogNew';
 import AddStageDialog from './AddStageDialog';
 import AddTaskDialog from './AddTaskDialog';
@@ -35,7 +44,7 @@ import AddTasksToStageDialog from './AddTasksToStageDialog';
 interface CaseDetails {
 	_id: string;
 	caseId: string;
-	clientId: {
+	clientId?: {
 		_id: string;
 		name: string;
 		email: string;
@@ -119,6 +128,7 @@ interface CaseDetails {
 function CaseDetails() {
 	const { id } = useParams<{ id: string }>();
 	const navigate = useNavigate();
+	const dispatch = useAppDispatch();
 	const [caseDetails, setCaseDetails] = useState<CaseDetails | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState('');
@@ -131,6 +141,16 @@ function CaseDetails() {
 	const [selectedStageId, setSelectedStageId] = useState<string>('');
 	const [selectedStageName, setSelectedStageName] = useState<string>('');
 	const [importType, setImportType] = useState<'workflow' | 'stage' | 'task'>('workflow');
+	
+	// Confirmation dialog states
+	const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+	const [confirmDialogData, setConfirmDialogData] = useState<{
+		title: string;
+		message: string;
+		onConfirm: () => void;
+		confirmText?: string;
+		cancelText?: string;
+	} | null>(null);
 
 	useEffect(() => {
 		if (id) {
@@ -232,6 +252,106 @@ function CaseDetails() {
 		setAddTasksToStageDialogOpen(false);
 	};
 
+	// Helper function to show confirmation dialog
+	const showConfirmDialog = (
+		title: string,
+		message: string,
+		onConfirm: () => void,
+		confirmText: string = 'Delete',
+		cancelText: string = 'Cancel'
+	) => {
+		setConfirmDialogData({
+			title,
+			message,
+			onConfirm,
+			confirmText,
+			cancelText
+		});
+		setConfirmDialogOpen(true);
+	};
+
+	const handleConfirmDialogClose = () => {
+		setConfirmDialogOpen(false);
+		setConfirmDialogData(null);
+	};
+
+	const handleConfirmDialogConfirm = () => {
+		if (confirmDialogData?.onConfirm) {
+			confirmDialogData.onConfirm();
+		}
+		handleConfirmDialogClose();
+	};
+
+	const handleDeleteStage = async (stageId: string, stageName: string) => {
+		const deleteStage = async () => {
+			try {
+				const response = await stageApi.delete(stageId);
+				const data = await fetchJson(response);
+				
+				if (data.success) {
+					// Refresh case details to show updated data
+					fetchCaseDetails();
+					dispatch(showMessage({
+						message: `Stage "${stageName}" deleted successfully`,
+						variant: 'success'
+					}));
+				} else {
+					dispatch(showMessage({
+						message: `Failed to delete stage: ${data.error || 'Unknown error'}`,
+						variant: 'error'
+					}));
+				}
+			} catch (error: any) {
+				console.error('Error deleting stage:', error);
+				dispatch(showMessage({
+					message: 'Failed to delete stage. Please try again.',
+					variant: 'error'
+				}));
+			}
+		};
+
+		showConfirmDialog(
+			'Delete Stage',
+			`Are you sure you want to delete the stage "${stageName}"? This action cannot be undone.`,
+			deleteStage
+		);
+	};
+
+	const handleDeleteTask = async (taskId: string, taskName: string) => {
+		const deleteTask = async () => {
+			try {
+				const response = await taskApi.delete(taskId);
+				const data = await fetchJson(response);
+				
+				if (data.success) {
+					// Refresh case details to show updated data
+					fetchCaseDetails();
+					dispatch(showMessage({
+						message: `Task "${taskName}" deleted successfully`,
+						variant: 'success'
+					}));
+				} else {
+					dispatch(showMessage({
+						message: `Failed to delete task: ${data.error || 'Unknown error'}`,
+						variant: 'error'
+					}));
+				}
+			} catch (error: any) {
+				console.error('Error deleting task:', error);
+				dispatch(showMessage({
+					message: 'Failed to delete task. Please try again.',
+					variant: 'error'
+				}));
+			}
+		};
+
+		showConfirmDialog(
+			'Delete Task',
+			`Are you sure you want to delete the task "${taskName}"? This action cannot be undone.`,
+			deleteTask
+		);
+	};
+
 	if (loading) {
 		return (
 			<Box className="flex justify-center items-center min-h-400">
@@ -293,7 +413,7 @@ function CaseDetails() {
 							Case Details: {caseDetails.caseId}
 						</Typography>
 						<Typography variant="body2" color="text.secondary">
-							Client: {caseDetails.clientId.name}
+							Client: {caseDetails.clientId?.name || 'No Client Assigned'}
 						</Typography>
 					</div>
 					<Box className="flex gap-8">
@@ -391,7 +511,7 @@ function CaseDetails() {
 									Client Name
 								</Typography>
 								<Typography variant="body1" className="font-bold text-gray-800">
-									{caseDetails.clientId.name}
+									{caseDetails.clientId?.name || 'No Client Assigned'}
 								</Typography>
 							</Box>
 							
@@ -400,19 +520,19 @@ function CaseDetails() {
 									Contact Information
 								</Typography>
 								<Typography variant="body2" className="text-gray-700 break-words">
-									{caseDetails.clientId.email}
+									{caseDetails.clientId?.email || 'N/A'}
 								</Typography>
-								{caseDetails.clientId.contactInfo?.phone && (
+								{caseDetails.clientId?.contactInfo?.phone && (
 									<Typography variant="body2" className="text-gray-700">
 										📞 {caseDetails.clientId.contactInfo.phone}
 									</Typography>
 								)}
-								{caseDetails.clientId.contactInfo?.address && (
+								{caseDetails.clientId?.contactInfo?.address && (
 									<Typography variant="body2" className="text-gray-700">
 										📍 {[
-											caseDetails.clientId.contactInfo.address.city,
-											caseDetails.clientId.contactInfo.address.state,
-											caseDetails.clientId.contactInfo.address.country
+											caseDetails.clientId?.contactInfo?.address?.city,
+											caseDetails.clientId?.contactInfo?.address?.state,
+											caseDetails.clientId?.contactInfo?.address?.country
 										].filter(Boolean).join(', ')}
 									</Typography>
 								)}
@@ -615,6 +735,14 @@ function CaseDetails() {
 														>
 															Add Tasks
 														</Button>
+														<IconButton
+															size="small"
+															color="error"
+															onClick={() => handleDeleteStage(stage._id, stage.name)}
+															title={`Delete stage "${stage.name}"`}
+														>
+															<DeleteIcon />
+														</IconButton>
 													</Box>
 												</Box>
 
@@ -669,6 +797,16 @@ function CaseDetails() {
 																						👤 {task.assignedTo.firstName} {task.assignedTo.lastName}
 																					</Typography>
 																				)}
+																			</Box>
+																			<Box className="flex items-start gap-1">
+																				<IconButton
+																					size="small"
+																					color="error"
+																					onClick={() => handleDeleteTask(task._id, task.title || task.name || 'Unnamed Task')}
+																					title={`Delete task "${task.title || task.name}"`}
+																				>
+																					<DeleteIcon fontSize="small" />
+																				</IconButton>
 																			</Box>
 																		</Box>
 																	</CardContent>
@@ -748,6 +886,16 @@ function CaseDetails() {
 																			👤 {task.assignedTo.firstName} {task.assignedTo.lastName}
 																		</Typography>
 																	)}
+																</Box>
+																<Box className="flex items-start gap-1">
+																	<IconButton
+																		size="small"
+																		color="error"
+																		onClick={() => handleDeleteTask(task._id, task.title || task.name || 'Unnamed Task')}
+																		title={`Delete task "${task.title || task.name}"`}
+																	>
+																		<DeleteIcon fontSize="small" />
+																	</IconButton>
 																</Box>
 															</Box>
 														</CardContent>
@@ -880,6 +1028,39 @@ function CaseDetails() {
 				stageId={selectedStageId}
 				stageName={selectedStageName}
 			/>
+
+			{/* Confirmation Dialog */}
+			<Dialog
+				open={confirmDialogOpen}
+				onClose={handleConfirmDialogClose}
+				aria-labelledby="confirm-dialog-title"
+				aria-describedby="confirm-dialog-description"
+			>
+				<DialogTitle id="confirm-dialog-title">
+					{confirmDialogData?.title}
+				</DialogTitle>
+				<DialogContent>
+					<DialogContentText id="confirm-dialog-description">
+						{confirmDialogData?.message}
+					</DialogContentText>
+				</DialogContent>
+				<DialogActions>
+					<Button 
+						onClick={handleConfirmDialogClose}
+						color="primary"
+					>
+						{confirmDialogData?.cancelText || 'Cancel'}
+					</Button>
+					<Button 
+						onClick={handleConfirmDialogConfirm}
+						color="error"
+						variant="contained"
+						autoFocus
+					>
+						{confirmDialogData?.confirmText || 'Delete'}
+					</Button>
+				</DialogActions>
+			</Dialog>
 		</div>
 	);
 }

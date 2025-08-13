@@ -17,7 +17,7 @@ import {
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { clientApi, userApi, onboardingApi, fetchJson } from '@/utils/authFetch';
+import { clientApi, userApi, onboardingApi, workflowTypeApi, fetchJson } from '@/utils/authFetch';
 import useUser from '@/@auth/useUser';
 
 interface Client {
@@ -34,6 +34,13 @@ interface User {
 	role: string;
 }
 
+interface WorkflowType {
+	_id: string;
+	name: string;
+	prefix: string;
+	isDefault: boolean;
+}
+
 interface NewCaseDialogProps {
 	open: boolean;
 	onClose: () => void;
@@ -42,6 +49,7 @@ interface NewCaseDialogProps {
 
 interface FormData {
 	caseId: string;
+	workflowTypeId: string;
 	clientId: string;
 	assignedChampion: string;
 	priority: 'Low' | 'Medium' | 'High' | 'Critical';
@@ -54,6 +62,7 @@ function NewCaseDialog({ open, onClose, onSuccess }: NewCaseDialogProps) {
 	const { data: currentUser } = useUser();
 	const [formData, setFormData] = useState<FormData>({
 		caseId: '',
+		workflowTypeId: '',
 		clientId: '',
 		assignedChampion: '',
 		priority: 'Medium',
@@ -64,6 +73,7 @@ function NewCaseDialog({ open, onClose, onSuccess }: NewCaseDialogProps) {
 
 	const [clients, setClients] = useState<Client[]>([]);
 	const [champions, setChampions] = useState<User[]>([]);
+	const [workflowTypes, setWorkflowTypes] = useState<WorkflowType[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState('');
 	const [retryCount, setRetryCount] = useState(0);
@@ -72,6 +82,7 @@ function NewCaseDialog({ open, onClose, onSuccess }: NewCaseDialogProps) {
 		if (open) {
 			fetchClients();
 			fetchChampions();
+			fetchWorkflowTypes();
 			generateCaseId();
 			setError('');
 			setRetryCount(0);
@@ -104,11 +115,44 @@ function NewCaseDialog({ open, onClose, onSuccess }: NewCaseDialogProps) {
 		}
 	};
 
-	const generateCaseId = () => {
+	const fetchWorkflowTypes = async () => {
+		try {
+			const response = await workflowTypeApi.getAll();
+			const data = await fetchJson(response);
+			setWorkflowTypes(data.data || []);
+			
+			// Set default workflow type if available
+			const defaultWorkflowType = data.data?.find((wt: WorkflowType) => wt.isDefault);
+			if (defaultWorkflowType && !formData.workflowTypeId) {
+				setFormData(prev => ({ ...prev, workflowTypeId: defaultWorkflowType._id }));
+				// Generate case ID with the default workflow type prefix
+				setTimeout(() => {
+					generateCaseId(defaultWorkflowType._id);
+				}, 0);
+			}
+		} catch (error) {
+			console.error('Error fetching workflow types:', error);
+		}
+	};
+
+	const generateCaseId = (workflowTypeId?: string) => {
+		let prefix = 'OB'; // Default prefix
+		
+		if (workflowTypeId && workflowTypes.length > 0) {
+			const selectedWorkflowType = workflowTypes.find(wt => wt._id === workflowTypeId);
+			if (selectedWorkflowType) {
+				prefix = selectedWorkflowType.prefix;
+			}
+		} else if (formData.workflowTypeId && workflowTypes.length > 0) {
+			const selectedWorkflowType = workflowTypes.find(wt => wt._id === formData.workflowTypeId);
+			if (selectedWorkflowType) {
+				prefix = selectedWorkflowType.prefix;
+			}
+		}
+		
 		const timestamp = Date.now();
 		const randomNum = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-		const dateStr = new Date().toISOString().slice(2, 10).replace(/-/g, ''); // YYMMDD format
-		setFormData(prev => ({ ...prev, caseId: `OB-${dateStr}-${randomNum}` }));
+		setFormData(prev => ({ ...prev, caseId: `${prefix}-${randomNum}` }));
 	};
 
 	const handleSubmit = async (e: React.FormEvent) => {
@@ -149,6 +193,7 @@ function NewCaseDialog({ open, onClose, onSuccess }: NewCaseDialogProps) {
 					// Reset form
 					setFormData({
 						caseId: '',
+						workflowTypeId: '',
 						clientId: '',
 						assignedChampion: '',
 						priority: 'Medium',
@@ -187,6 +232,14 @@ function NewCaseDialog({ open, onClose, onSuccess }: NewCaseDialogProps) {
 
 	const handleChange = (field: keyof FormData, value: any) => {
 		setFormData(prev => ({ ...prev, [field]: value }));
+		
+		// Regenerate case ID when workflow type changes
+		if (field === 'workflowTypeId') {
+			// Use setTimeout to ensure state is updated before generating new case ID
+			setTimeout(() => {
+				generateCaseId(value);
+			}, 0);
+		}
 	};
 
 	return (
@@ -226,6 +279,22 @@ function NewCaseDialog({ open, onClose, onSuccess }: NewCaseDialogProps) {
 									</Select>
 								</FormControl>
 							</Box>
+
+							{/* Workflow Type */}
+							<FormControl fullWidth size="small" required>
+								<InputLabel>Workflow Type</InputLabel>
+								<Select
+									value={formData.workflowTypeId}
+									onChange={(e) => handleChange('workflowTypeId', e.target.value)}
+									label="Workflow Type"
+								>
+									{workflowTypes.map((workflowType) => (
+										<MenuItem key={workflowType._id} value={workflowType._id}>
+											{workflowType.name} - {workflowType.prefix}
+										</MenuItem>
+									))}
+								</Select>
+							</FormControl>
 
 							{/* Client */}
 							<FormControl fullWidth size="small" required>

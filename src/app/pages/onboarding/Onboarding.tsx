@@ -27,7 +27,12 @@ import { onboardingApi, fetchJson } from '@/utils/authFetch';
 interface OnboardingCase {
 	_id: string;
 	caseId: string;
-	clientId: {
+	workflowTypeId?: {
+		_id: string;
+		name: string;
+		prefix: string;
+	};
+	clientId?: {
 		_id: string;
 		name: string;
 		email: string;
@@ -229,6 +234,7 @@ function Onboarding() {
 								<TableHead>
 									<TableRow>
 										<TableCell>Case ID</TableCell>
+										<TableCell>Workflow Type</TableCell>
 										<TableCell>Client</TableCell>
 										<TableCell>Status</TableCell>
 										<TableCell>Priority</TableCell>
@@ -265,10 +271,20 @@ function Onboarding() {
 												<TableCell>
 													<div>
 														<Typography variant="body2" className="font-medium">
-															{onboardingCase.clientId.name}
+															{onboardingCase.workflowTypeId?.name || 'Onboarding'}
 														</Typography>
 														<Typography variant="caption" color="text.secondary">
-															{onboardingCase.clientId.email}
+															{onboardingCase.workflowTypeId?.prefix || 'OB'}
+														</Typography>
+													</div>
+												</TableCell>
+												<TableCell>
+													<div>
+														<Typography variant="body2" className="font-medium">
+															{onboardingCase.clientId?.name || 'No Client Assigned'}
+														</Typography>
+														<Typography variant="caption" color="text.secondary">
+															{onboardingCase.clientId?.email || 'N/A'}
 														</Typography>
 													</div>
 												</TableCell>

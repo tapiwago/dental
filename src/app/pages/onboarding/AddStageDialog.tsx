@@ -162,8 +162,8 @@ function AddStageDialog({ open, onClose, onSuccess, caseId }: AddStageDialogProp
 			name: name.trim(),
 			description: description.trim() || undefined,
 			sequence: parseInt(sequence),
-			onboardingCase: caseId,
-			status: 'pending',
+			onboardingCaseId: caseId,
+			status: 'Not Started',
 			estimatedDuration: estimatedDuration ? parseInt(estimatedDuration) : undefined,
 			isRequired,
 			createdBy: user.id
@@ -200,8 +200,8 @@ function AddStageDialog({ open, onClose, onSuccess, caseId }: AddStageDialogProp
 				name: template.name,
 				description: template.description || '',
 				sequence: maxSequence,
-				onboardingCase: caseId,
-				status: 'pending',
+				onboardingCaseId: caseId,
+				status: 'Not Started',
 				estimatedDuration: template.configuration?.estimatedDuration || 0,
 				isRequired: template.configuration?.isRequired ?? true,
 				createdBy: user.id
@@ -218,11 +218,11 @@ function AddStageDialog({ open, onClose, onSuccess, caseId }: AddStageDialogProp
 					const taskData = {
 						name: task.name,
 						description: task.description,
-						priority: task.priority || 'medium',
-						status: 'pending',
+						priority: task.priority || 'Medium',
+						status: 'Not Started',
 						sequence: taskIndex + 1,
-						stage: createdStage._id,
-						onboardingCase: caseId,
+						stageId: createdStage._id,
+						onboardingCaseId: caseId,
 						estimatedHours: task.estimatedHours || 1,
 						createdBy: user.id,
 						isRequired: true

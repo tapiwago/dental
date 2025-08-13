@@ -175,8 +175,8 @@ const ImportTemplateDialog: React.FC<ImportTemplateDialogProps> = ({
 					name: stageTemplate.name,
 					description: stageTemplate.description,
 					sequence: maxSequence,
-					onboardingCase: caseId,
-					status: 'pending',
+					onboardingCaseId: caseId,
+					status: 'Not Started',
 					createdBy: currentUser?.id || currentUser?._id,
 					estimatedDuration: stageTemplate.estimatedDuration || 0,
 					isRequired: stageTemplate.isRequired || true
@@ -196,11 +196,11 @@ const ImportTemplateDialog: React.FC<ImportTemplateDialogProps> = ({
 						const taskData = {
 							name: task.name,
 							description: task.description,
-							priority: task.priority || 'medium',
-							status: 'pending',
+							priority: task.priority || 'Medium',
+							status: 'Not Started',
 							sequence: taskIndex + 1,
-							stage: createdStage._id,
-							onboardingCase: caseId,
+							stageId: createdStage._id,
+							onboardingCaseId: caseId,
 							estimatedHours: task.estimatedHours || 1,
 							createdBy: currentUser?.id || currentUser?._id,
 							isRequired: task.isRequired || true

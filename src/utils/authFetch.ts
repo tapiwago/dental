@@ -227,6 +227,15 @@ export const onboardingApi = {
   getDashboard: () => authGet('/api/onboarding-cases/dashboard/summary', { requireAuth: true })
 };
 
+export const workflowTypeApi = {
+  getAll: () => authGet('/api/workflow-types', { requireAuth: true }),
+  getById: (id: string) => authGet(`/api/workflow-types/${id}`, { requireAuth: true }),
+  create: (workflowTypeData: any) => authPost('/api/workflow-types', workflowTypeData, { requireAuth: true }),
+  update: (id: string, workflowTypeData: any) => authPut(`/api/workflow-types/${id}`, workflowTypeData, { requireAuth: true }),
+  delete: (id: string) => authDelete(`/api/workflow-types/${id}`, { requireAuth: true }),
+  setDefault: (id: string) => authPut(`/api/workflow-types/${id}/set-default`, {}, { requireAuth: true })
+};
+
 export const templateApi = {
   getAll: (params?: URLSearchParams) => {
     const endpoint = params ? `/api/templates?${params.toString()}` : '/api/templates';
