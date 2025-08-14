@@ -53,6 +53,14 @@ const navigationConfig: FuseNavItemType[] = [
 		url: 'users'
 	},
 	{
+		id: 'audit-logs',
+		title: 'Audit Logs',
+		translate: 'AUDIT_LOGS',
+		type: 'item',
+		icon: 'heroicons-outline:shield-check',
+		url: 'audit-logs'
+	},
+	{
 		id: 'example-component',
 		title: 'Example',
 		translate: 'EXAMPLE',

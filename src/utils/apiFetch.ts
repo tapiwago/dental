@@ -257,4 +257,13 @@ export const authApi = {
 	register: (userData: any) => apiPost('/api/users/register', userData)
 };
 
+export const auditApi = {
+	getAll: () => authGet('/api/audit-logs'),
+	getById: (id: string) => authGet(`/api/audit-logs/${id}`),
+	getByUser: (userId: string) => authGet(`/api/audit-logs/user/${userId}`),
+	getByDateRange: (startDate: string, endDate: string) => 
+		authGet(`/api/audit-logs/range?start=${startDate}&end=${endDate}`),
+	getBySeverity: (severity: string) => authGet(`/api/audit-logs/severity/${severity}`)
+};
+
 export default apiFetch;

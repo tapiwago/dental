@@ -5,6 +5,7 @@ const locale = {
 	WORKFLOW_TEMPLATES: 'Workflow Templates',
 	CLIENTS: 'Clients',
 	USERS: 'Users',
+	AUDIT_LOGS: 'Audit Logs',
 	EXAMPLE: 'Example'
 };
 
