@@ -17,13 +17,9 @@ import {
 	CircularProgress,
 	Card,
 	CardContent,
-	Grid,
 	Divider
 } from '@mui/material';
-import {
-	Assignment as StageIcon,
-	Task as TaskIcon
-} from '@mui/icons-material';
+import { Assignment as StageIcon, Task as TaskIcon } from '@mui/icons-material';
 import { templateApi, stageApi, taskApi, fetchJson } from '@/utils/authFetch';
 import useUser from '@/@auth/useUser';
 
@@ -42,13 +38,13 @@ interface WorkflowStage {
 	workflowName: string;
 	estimatedDuration?: number;
 	isRequired?: boolean;
-	tasks: Array<{
+	tasks: {
 		name: string;
 		description: string;
 		priority: string;
 		estimatedHours: number;
 		isRequired?: boolean;
-	}>;
+	}[];
 }
 
 interface Template {
@@ -57,26 +53,21 @@ interface Template {
 	description: string;
 	type: string;
 	configuration?: {
-		defaultStages?: Array<{
+		defaultStages?: {
 			name: string;
 			description: string;
 			sequence: number;
-			tasks: Array<{
+			tasks: {
 				name: string;
 				description: string;
 				priority: string;
 				estimatedHours: number;
-			}>;
-		}>;
+			}[];
+		}[];
 	};
 }
 
-const ImportTemplateDialog: React.FC<ImportTemplateDialogProps> = ({
-	open,
-	onClose,
-	onSuccess,
-	caseId
-}) => {
+const ImportTemplateDialog: React.FC<ImportTemplateDialogProps> = ({ open, onClose, onSuccess, caseId }) => {
 	const [workflowStages, setWorkflowStages] = useState<WorkflowStage[]>([]);
 	const [selectedStages, setSelectedStages] = useState<string[]>([]);
 	const [loading, setLoading] = useState(false);
@@ -96,18 +87,19 @@ const ImportTemplateDialog: React.FC<ImportTemplateDialogProps> = ({
 			// Fetch all templates
 			const response = await templateApi.getAll();
 			const data = await fetchJson(response);
-			
+
 			console.log('API Response:', data);
-			
+
 			// Handle different response structures
 			const templates = data.templates || data || [];
 			console.log('All templates:', templates);
-			console.log('Template types found:', templates.map((t: Template) => t.type));
-			
-			// Filter for Stage type templates only
-			const stageTemplates = templates.filter(
-				(template: Template) => template.type === 'Stage'
+			console.log(
+				'Template types found:',
+				templates.map((t: Template) => t.type)
 			);
+
+			// Filter for Stage type templates only
+			const stageTemplates = templates.filter((template: Template) => template.type === 'Stage');
 			console.log('Stage templates:', stageTemplates);
 
 			// Convert each stage template to a WorkflowStage
@@ -132,10 +124,8 @@ const ImportTemplateDialog: React.FC<ImportTemplateDialogProps> = ({
 	};
 
 	const handleStageToggle = (stageId: string) => {
-		setSelectedStages(prev =>
-			prev.includes(stageId)
-				? prev.filter(id => id !== stageId)
-				: [...prev, stageId]
+		setSelectedStages((prev) =>
+			prev.includes(stageId) ? prev.filter((id) => id !== stageId) : [...prev, stageId]
 		);
 	};
 
@@ -154,15 +144,17 @@ const ImportTemplateDialog: React.FC<ImportTemplateDialogProps> = ({
 			params.append('onboardingCase', caseId);
 			const existingStagesResponse = await stageApi.getAll(params);
 			const existingStagesData = await fetchJson(existingStagesResponse);
-			
+
 			let maxSequence = 0;
+
 			if (existingStagesData && Array.isArray(existingStagesData)) {
 				maxSequence = Math.max(0, ...existingStagesData.map((stage: any) => stage.sequence || 0));
 			}
 
 			// Import selected stages
 			for (const stageId of selectedStages) {
-				const stageTemplate = workflowStages.find(s => s.id === stageId);
+				const stageTemplate = workflowStages.find((s) => s.id === stageId);
+
 				if (!stageTemplate) {
 					console.log('Stage template not found for ID:', stageId);
 					continue;
@@ -186,13 +178,13 @@ const ImportTemplateDialog: React.FC<ImportTemplateDialogProps> = ({
 				const stageResponse = await stageApi.create(stageData);
 				const createdStage = await fetchJson(stageResponse);
 				console.log('Created stage:', createdStage);
-				
+
 				if (createdStage && stageTemplate.tasks?.length > 0) {
 					console.log('Creating tasks for stage:', stageTemplate.tasks);
 					// Import tasks for this stage
 					for (let taskIndex = 0; taskIndex < stageTemplate.tasks.length; taskIndex++) {
 						const task = stageTemplate.tasks[taskIndex];
-						
+
 						const taskData = {
 							name: task.name,
 							description: task.description,
@@ -229,56 +221,90 @@ const ImportTemplateDialog: React.FC<ImportTemplateDialogProps> = ({
 	};
 
 	// Group stages by workflow
-	const groupedStages = workflowStages.reduce((acc, stage) => {
-		if (!acc[stage.workflowName]) {
-			acc[stage.workflowName] = [];
-		}
-		acc[stage.workflowName].push(stage);
-		return acc;
-	}, {} as Record<string, WorkflowStage[]>);
+	const groupedStages = workflowStages.reduce(
+		(acc, stage) => {
+			if (!acc[stage.workflowName]) {
+				acc[stage.workflowName] = [];
+			}
+
+			acc[stage.workflowName].push(stage);
+			return acc;
+		},
+		{} as Record<string, WorkflowStage[]>
+	);
 
 	console.log('Workflow stages:', workflowStages);
 	console.log('Grouped stages:', groupedStages);
 	console.log('Number of grouped workflow keys:', Object.keys(groupedStages).length);
 
 	return (
-		<Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+		<Dialog
+			open={open}
+			onClose={handleClose}
+			maxWidth="md"
+			fullWidth
+		>
 			<DialogTitle>
 				Import Workflow Stages
-				<Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+				<Typography
+					variant="body2"
+					color="textSecondary"
+					sx={{ mt: 1 }}
+				>
 					Select individual stages from workflow templates to add to your onboarding case
 				</Typography>
 			</DialogTitle>
-			
+
 			<DialogContent>
 				{error && (
-					<Alert severity="error" sx={{ mb: 2 }}>
+					<Alert
+						severity="error"
+						sx={{ mb: 2 }}
+					>
 						{error}
 					</Alert>
 				)}
 
 				{loading ? (
-					<Box display="flex" justifyContent="center" p={3}>
+					<Box
+						display="flex"
+						justifyContent="center"
+						p={3}
+					>
 						<CircularProgress />
 					</Box>
 				) : (
 					<Box>
 						{Object.keys(groupedStages).length === 0 ? (
-							<Typography variant="body2" color="textSecondary" textAlign="center" py={3}>
+							<Typography
+								variant="body2"
+								color="textSecondary"
+								textAlign="center"
+								py={3}
+							>
 								No workflow stages available to import
 							</Typography>
 						) : (
 							Object.entries(groupedStages).map(([workflowName, stages]) => (
-								<Card key={workflowName} sx={{ mb: 2 }}>
+								<Card
+									key={workflowName}
+									sx={{ mb: 2 }}
+								>
 									<CardContent>
-										<Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+										<Typography
+											variant="h6"
+											sx={{ mb: 2, display: 'flex', alignItems: 'center' }}
+										>
 											<StageIcon sx={{ mr: 1 }} />
 											{workflowName}
 										</Typography>
-										
+
 										<List dense>
 											{stages.map((stage) => (
-												<ListItem key={stage.id} sx={{ px: 0 }}>
+												<ListItem
+													key={stage.id}
+													sx={{ px: 0 }}
+												>
 													<ListItemIcon>
 														<Checkbox
 															checked={selectedStages.includes(stage.id)}
@@ -287,19 +313,23 @@ const ImportTemplateDialog: React.FC<ImportTemplateDialogProps> = ({
 													</ListItemIcon>
 													<ListItemText
 														primary={
-															<Box display="flex" alignItems="center" gap={1}>
+															<Box
+																display="flex"
+																alignItems="center"
+																gap={1}
+															>
 																<Typography variant="subtitle2">
 																	{stage.name}
 																</Typography>
-																<Chip 
-																	label={`Seq: ${stage.sequence}`} 
-																	size="small" 
-																	variant="outlined" 
+																<Chip
+																	label={`Seq: ${stage.sequence}`}
+																	size="small"
+																	variant="outlined"
 																/>
 																{stage.tasks.length > 0 && (
-																	<Chip 
-																		label={`${stage.tasks.length} tasks`} 
-																		size="small" 
+																	<Chip
+																		label={`${stage.tasks.length} tasks`}
+																		size="small"
 																		variant="outlined"
 																		icon={<TaskIcon />}
 																	/>
@@ -319,12 +349,19 @@ const ImportTemplateDialog: React.FC<ImportTemplateDialogProps> = ({
 						{selectedStages.length > 0 && (
 							<Box mt={2}>
 								<Divider sx={{ mb: 2 }} />
-								<Typography variant="subtitle2" gutterBottom>
+								<Typography
+									variant="subtitle2"
+									gutterBottom
+								>
 									Selected Stages ({selectedStages.length}):
 								</Typography>
-								<Box display="flex" flexWrap="wrap" gap={1}>
-									{selectedStages.map(stageId => {
-										const stage = workflowStages.find(s => s.id === stageId);
+								<Box
+									display="flex"
+									flexWrap="wrap"
+									gap={1}
+								>
+									{selectedStages.map((stageId) => {
+										const stage = workflowStages.find((s) => s.id === stageId);
 										return stage ? (
 											<Chip
 												key={stageId}
@@ -340,17 +377,17 @@ const ImportTemplateDialog: React.FC<ImportTemplateDialogProps> = ({
 					</Box>
 				)}
 			</DialogContent>
-			
+
 			<DialogActions>
-				<Button onClick={handleClose}>
-					Cancel
-				</Button>
+				<Button onClick={handleClose}>Cancel</Button>
 				<Button
 					onClick={handleImport}
 					variant="contained"
 					disabled={loading || selectedStages.length === 0}
 				>
-					{loading ? 'Importing...' : `Import ${selectedStages.length} Stage${selectedStages.length !== 1 ? 's' : ''}`}
+					{loading
+						? 'Importing...'
+						: `Import ${selectedStages.length} Stage${selectedStages.length !== 1 ? 's' : ''}`}
 				</Button>
 			</DialogActions>
 		</Dialog>

@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
 	Typography,
-	Paper,
 	Box,
 	Chip,
 	Divider,
@@ -15,21 +14,17 @@ import {
 	Alert,
 	ButtonGroup,
 	IconButton,
-	Menu,
-	MenuItem,
 	Dialog,
 	DialogTitle,
 	DialogContent,
 	DialogActions,
 	DialogContentText
 } from '@mui/material';
-import { 
+import {
 	ArrowBack as ArrowBackIcon,
 	Add as AddIcon,
 	FileDownload as ImportIcon,
-	MoreVert as MoreVertIcon,
-	Delete as DeleteIcon,
-	Edit as EditIcon
+	Delete as DeleteIcon
 } from '@mui/icons-material';
 import { useParams } from 'react-router';
 import useNavigate from '@fuse/hooks/useNavigate';
@@ -72,17 +67,17 @@ interface CaseDetails {
 		email: string;
 		role?: string;
 	};
-	linkedGuides?: Array<{
+	linkedGuides?: {
 		_id: string;
 		title: string;
 		description?: string;
 		category?: string;
-	}>;
+	}[];
 	notes?: string;
 	tags?: string[];
 	createdAt: string;
 	updatedAt: string;
-	stages?: Array<{
+	stages?: {
 		_id: string;
 		name: string;
 		description?: string;
@@ -94,8 +89,8 @@ interface CaseDetails {
 			lastName: string;
 			email: string;
 		};
-	}>;
-	tasks?: Array<{
+	}[];
+	tasks?: {
 		_id: string;
 		title: string;
 		name?: string; // Alternative field name from backend
@@ -109,8 +104,8 @@ interface CaseDetails {
 			firstName: string;
 			lastName: string;
 		};
-	}>;
-	documents?: Array<{
+	}[];
+	documents?: {
 		_id: string;
 		filename: string;
 		originalName: string;
@@ -122,7 +117,7 @@ interface CaseDetails {
 			lastName: string;
 		};
 		uploadedAt: string;
-	}>;
+	}[];
 }
 
 function CaseDetails() {
@@ -132,7 +127,7 @@ function CaseDetails() {
 	const [caseDetails, setCaseDetails] = useState<CaseDetails | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState('');
-	
+
 	// Dialog states
 	const [importDialogOpen, setImportDialogOpen] = useState(false);
 	const [addStageDialogOpen, setAddStageDialogOpen] = useState(false);
@@ -141,7 +136,7 @@ function CaseDetails() {
 	const [selectedStageId, setSelectedStageId] = useState<string>('');
 	const [selectedStageName, setSelectedStageName] = useState<string>('');
 	const [importType, setImportType] = useState<'workflow' | 'stage' | 'task'>('workflow');
-	
+
 	// Confirmation dialog states
 	const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 	const [confirmDialogData, setConfirmDialogData] = useState<{
@@ -181,21 +176,21 @@ function CaseDetails() {
 	const getStatusColor = (status: string) => {
 		const colors = {
 			'Not Started': 'default',
-			'Planning': 'info',
+			Planning: 'info',
 			'In Progress': 'primary',
 			'On Hold': 'warning',
-			'Completed': 'success',
-			'Cancelled': 'error'
+			Completed: 'success',
+			Cancelled: 'error'
 		};
 		return colors[status as keyof typeof colors] || 'default';
 	};
 
 	const getPriorityColor = (priority: string) => {
 		const colors = {
-			'Low': 'success',
-			'Medium': 'info',
-			'High': 'warning',
-			'Critical': 'error'
+			Low: 'success',
+			Medium: 'info',
+			High: 'warning',
+			Critical: 'error'
 		};
 		return colors[priority as keyof typeof colors] || 'default';
 	};
@@ -236,14 +231,16 @@ function CaseDetails() {
 	// Helper function to group tasks by stage
 	const getTasksForStage = (stageId: string) => {
 		if (!caseDetails?.tasks) return [];
-		return caseDetails.tasks.filter(task => task.stageId === stageId);
+
+		return caseDetails.tasks.filter((task) => task.stageId === stageId);
 	};
 
 	// Helper function to get unassigned tasks (tasks without a stage or with invalid stageId)
 	const getUnassignedTasks = () => {
 		if (!caseDetails?.tasks || !caseDetails?.stages) return caseDetails?.tasks || [];
-		const stageIds = caseDetails.stages.map(stage => stage._id);
-		return caseDetails.tasks.filter(task => !task.stageId || !stageIds.includes(task.stageId));
+
+		const stageIds = caseDetails.stages.map((stage) => stage._id);
+		return caseDetails.tasks.filter((task) => !task.stageId || !stageIds.includes(task.stageId));
 	};
 
 	const handleTasksAddedToStage = () => {
@@ -257,8 +254,8 @@ function CaseDetails() {
 		title: string,
 		message: string,
 		onConfirm: () => void,
-		confirmText: string = 'Delete',
-		cancelText: string = 'Cancel'
+		confirmText = 'Delete',
+		cancelText = 'Cancel'
 	) => {
 		setConfirmDialogData({
 			title,
@@ -279,6 +276,7 @@ function CaseDetails() {
 		if (confirmDialogData?.onConfirm) {
 			confirmDialogData.onConfirm();
 		}
+
 		handleConfirmDialogClose();
 	};
 
@@ -287,26 +285,32 @@ function CaseDetails() {
 			try {
 				const response = await stageApi.delete(stageId);
 				const data = await fetchJson(response);
-				
+
 				if (data.success) {
 					// Refresh case details to show updated data
 					fetchCaseDetails();
-					dispatch(showMessage({
-						message: `Stage "${stageName}" deleted successfully`,
-						variant: 'success'
-					}));
+					dispatch(
+						showMessage({
+							message: `Stage "${stageName}" deleted successfully`,
+							variant: 'success'
+						})
+					);
 				} else {
-					dispatch(showMessage({
-						message: `Failed to delete stage: ${data.error || 'Unknown error'}`,
-						variant: 'error'
-					}));
+					dispatch(
+						showMessage({
+							message: `Failed to delete stage: ${data.error || 'Unknown error'}`,
+							variant: 'error'
+						})
+					);
 				}
 			} catch (error: any) {
 				console.error('Error deleting stage:', error);
-				dispatch(showMessage({
-					message: 'Failed to delete stage. Please try again.',
-					variant: 'error'
-				}));
+				dispatch(
+					showMessage({
+						message: 'Failed to delete stage. Please try again.',
+						variant: 'error'
+					})
+				);
 			}
 		};
 
@@ -322,26 +326,32 @@ function CaseDetails() {
 			try {
 				const response = await taskApi.delete(taskId);
 				const data = await fetchJson(response);
-				
+
 				if (data.success) {
 					// Refresh case details to show updated data
 					fetchCaseDetails();
-					dispatch(showMessage({
-						message: `Task "${taskName}" deleted successfully`,
-						variant: 'success'
-					}));
+					dispatch(
+						showMessage({
+							message: `Task "${taskName}" deleted successfully`,
+							variant: 'success'
+						})
+					);
 				} else {
-					dispatch(showMessage({
-						message: `Failed to delete task: ${data.error || 'Unknown error'}`,
-						variant: 'error'
-					}));
+					dispatch(
+						showMessage({
+							message: `Failed to delete task: ${data.error || 'Unknown error'}`,
+							variant: 'error'
+						})
+					);
 				}
 			} catch (error: any) {
 				console.error('Error deleting task:', error);
-				dispatch(showMessage({
-					message: 'Failed to delete task. Please try again.',
-					variant: 'error'
-				}));
+				dispatch(
+					showMessage({
+						message: 'Failed to delete task. Please try again.',
+						variant: 'error'
+					})
+				);
 			}
 		};
 
@@ -363,7 +373,10 @@ function CaseDetails() {
 	if (error) {
 		return (
 			<Box className="p-24">
-				<Alert severity="error" className="mb-16">
+				<Alert
+					severity="error"
+					className="mb-16"
+				>
 					{error}
 				</Alert>
 				<Button
@@ -380,7 +393,10 @@ function CaseDetails() {
 	if (!caseDetails) {
 		return (
 			<Box className="p-24">
-				<Alert severity="warning" className="mb-16">
+				<Alert
+					severity="warning"
+					className="mb-16"
+				>
 					Case not found
 				</Alert>
 				<Button
@@ -406,13 +422,19 @@ function CaseDetails() {
 				>
 					Back to Onboarding
 				</Button>
-				
+
 				<Box className="flex items-center justify-between">
 					<div>
-						<Typography variant="h5" className="font-bold">
+						<Typography
+							variant="h5"
+							className="font-bold"
+						>
 							Case Details: {caseDetails.caseId}
 						</Typography>
-						<Typography variant="body2" color="text.secondary">
+						<Typography
+							variant="body2"
+							color="text.secondary"
+						>
 							Client: {caseDetails.clientId?.name || 'No Client Assigned'}
 						</Typography>
 					</div>
@@ -438,45 +460,72 @@ function CaseDetails() {
 					<CardContent className="p-6">
 						<Box className="flex items-center mb-4">
 							<Box className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center mr-3">
-								<Typography variant="h6" className="text-white font-bold">
+								<Typography
+									variant="h6"
+									className="text-white font-bold"
+								>
 									📋
 								</Typography>
 							</Box>
-							<Typography variant="h6" className="font-bold text-blue-800">
+							<Typography
+								variant="h6"
+								className="font-bold text-blue-800"
+							>
 								Case Overview
 							</Typography>
 						</Box>
-						
+
 						<Box className="space-y-3">
 							<Box className="bg-white rounded-lg p-3 shadow-sm">
-								<Typography variant="caption" className="text-blue-600 font-medium block">
+								<Typography
+									variant="caption"
+									className="text-blue-600 font-medium block"
+								>
 									Case ID
 								</Typography>
-								<Typography variant="body1" className="font-bold text-gray-800">
+								<Typography
+									variant="body1"
+									className="font-bold text-gray-800"
+								>
 									{caseDetails.caseId}
 								</Typography>
 							</Box>
-							
+
 							<Box className="bg-white rounded-lg p-3 shadow-sm">
-								<Typography variant="caption" className="text-blue-600 font-medium block">
+								<Typography
+									variant="caption"
+									className="text-blue-600 font-medium block"
+								>
 									Timeline
 								</Typography>
-								<Typography variant="body2" className="text-gray-700">
+								<Typography
+									variant="body2"
+									className="text-gray-700"
+								>
 									Started: {new Date(caseDetails.startDate).toLocaleDateString()}
 								</Typography>
 								{caseDetails.expectedCompletionDate && (
-									<Typography variant="body2" className="text-gray-700">
+									<Typography
+										variant="body2"
+										className="text-gray-700"
+									>
 										Due: {new Date(caseDetails.expectedCompletionDate).toLocaleDateString()}
 									</Typography>
 								)}
 							</Box>
-							
+
 							<Box className="bg-white rounded-lg p-3 shadow-sm">
 								<Box className="flex items-center justify-between mb-2">
-									<Typography variant="caption" className="text-blue-600 font-medium">
+									<Typography
+										variant="caption"
+										className="text-blue-600 font-medium"
+									>
 										Progress
 									</Typography>
-									<Typography variant="caption" className="font-bold text-blue-700">
+									<Typography
+										variant="caption"
+										className="font-bold text-blue-700"
+									>
 										{caseDetails.progress}%
 									</Typography>
 								</Box>
@@ -496,44 +545,71 @@ function CaseDetails() {
 					<CardContent className="p-6">
 						<Box className="flex items-center mb-4">
 							<Box className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center mr-3">
-								<Typography variant="h6" className="text-white font-bold">
+								<Typography
+									variant="h6"
+									className="text-white font-bold"
+								>
 									👤
 								</Typography>
 							</Box>
-							<Typography variant="h6" className="font-bold text-green-800">
+							<Typography
+								variant="h6"
+								className="font-bold text-green-800"
+							>
 								Client Details
 							</Typography>
 						</Box>
-						
+
 						<Box className="space-y-3">
 							<Box className="bg-white rounded-lg p-3 shadow-sm">
-								<Typography variant="caption" className="text-green-600 font-medium block">
+								<Typography
+									variant="caption"
+									className="text-green-600 font-medium block"
+								>
 									Client Name
 								</Typography>
-								<Typography variant="body1" className="font-bold text-gray-800">
+								<Typography
+									variant="body1"
+									className="font-bold text-gray-800"
+								>
 									{caseDetails.clientId?.name || 'No Client Assigned'}
 								</Typography>
 							</Box>
-							
+
 							<Box className="bg-white rounded-lg p-3 shadow-sm">
-								<Typography variant="caption" className="text-green-600 font-medium block">
+								<Typography
+									variant="caption"
+									className="text-green-600 font-medium block"
+								>
 									Contact Information
 								</Typography>
-								<Typography variant="body2" className="text-gray-700 break-words">
+								<Typography
+									variant="body2"
+									className="text-gray-700 break-words"
+								>
 									{caseDetails.clientId?.email || 'N/A'}
 								</Typography>
 								{caseDetails.clientId?.contactInfo?.phone && (
-									<Typography variant="body2" className="text-gray-700">
+									<Typography
+										variant="body2"
+										className="text-gray-700"
+									>
 										📞 {caseDetails.clientId.contactInfo.phone}
 									</Typography>
 								)}
 								{caseDetails.clientId?.contactInfo?.address && (
-									<Typography variant="body2" className="text-gray-700">
-										📍 {[
+									<Typography
+										variant="body2"
+										className="text-gray-700"
+									>
+										📍{' '}
+										{[
 											caseDetails.clientId?.contactInfo?.address?.city,
 											caseDetails.clientId?.contactInfo?.address?.state,
 											caseDetails.clientId?.contactInfo?.address?.country
-										].filter(Boolean).join(', ')}
+										]
+											.filter(Boolean)
+											.join(', ')}
 									</Typography>
 								)}
 							</Box>
@@ -546,30 +622,48 @@ function CaseDetails() {
 					<CardContent className="p-6">
 						<Box className="flex items-center mb-4">
 							<Box className="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center mr-3">
-								<Typography variant="h6" className="text-white font-bold">
+								<Typography
+									variant="h6"
+									className="text-white font-bold"
+								>
 									🏆
 								</Typography>
 							</Box>
-							<Typography variant="h6" className="font-bold text-purple-800">
+							<Typography
+								variant="h6"
+								className="font-bold text-purple-800"
+							>
 								Assignment & Status
 							</Typography>
 						</Box>
-						
+
 						<Box className="space-y-3">
 							<Box className="bg-white rounded-lg p-3 shadow-sm">
-								<Typography variant="caption" className="text-purple-600 font-medium block">
+								<Typography
+									variant="caption"
+									className="text-purple-600 font-medium block"
+								>
 									Assigned Champion
 								</Typography>
-								<Typography variant="body1" className="font-bold text-gray-800">
+								<Typography
+									variant="body1"
+									className="font-bold text-gray-800"
+								>
 									{caseDetails.assignedChampion.firstName} {caseDetails.assignedChampion.lastName}
 								</Typography>
-								<Typography variant="caption" className="text-gray-600">
+								<Typography
+									variant="caption"
+									className="text-gray-600"
+								>
 									{caseDetails.assignedChampion.email}
 								</Typography>
 							</Box>
-							
+
 							<Box className="bg-white rounded-lg p-3 shadow-sm">
-								<Typography variant="caption" className="text-purple-600 font-medium block mb-2">
+								<Typography
+									variant="caption"
+									className="text-purple-600 font-medium block mb-2"
+								>
 									Current Status
 								</Typography>
 								<Box className="flex flex-wrap gap-2">
@@ -587,51 +681,68 @@ function CaseDetails() {
 									/>
 								</Box>
 							</Box>
-							
-							{(caseDetails.tags && caseDetails.tags.length > 0) && (
+
+							{caseDetails.tags && caseDetails.tags.length > 0 && (
 								<Box className="bg-white rounded-lg p-3 shadow-sm">
-									<Typography variant="caption" className="text-purple-600 font-medium block mb-2">
+									<Typography
+										variant="caption"
+										className="text-purple-600 font-medium block mb-2"
+									>
 										Tags
 									</Typography>
 									<Box className="flex flex-wrap gap-1">
 										{caseDetails.tags.slice(0, 3).map((tag, index) => (
-											<Chip 
-												key={index} 
-												label={tag} 
-												size="small" 
-												variant="outlined" 
+											<Chip
+												key={index}
+												label={tag}
+												size="small"
+												variant="outlined"
 												className="text-xs"
 											/>
 										))}
 										{caseDetails.tags.length > 3 && (
-											<Chip 
-												label={`+${caseDetails.tags.length - 3} more`} 
-												size="small" 
-												variant="outlined" 
+											<Chip
+												label={`+${caseDetails.tags.length - 3} more`}
+												size="small"
+												variant="outlined"
 												className="text-xs"
 											/>
 										)}
 									</Box>
 								</Box>
 							)}
-							
+
 							{caseDetails.notes && (
 								<Box className="bg-white rounded-lg p-3 shadow-sm">
-									<Typography variant="caption" className="text-purple-600 font-medium block mb-1">
+									<Typography
+										variant="caption"
+										className="text-purple-600 font-medium block mb-1"
+									>
 										Notes
 									</Typography>
-									<Typography variant="body2" className="text-gray-700 text-sm leading-relaxed">
-										{caseDetails.notes.length > 100 ? `${caseDetails.notes.substring(0, 100)}...` : caseDetails.notes}
+									<Typography
+										variant="body2"
+										className="text-gray-700 text-sm leading-relaxed"
+									>
+										{caseDetails.notes.length > 100
+											? `${caseDetails.notes.substring(0, 100)}...`
+											: caseDetails.notes}
 									</Typography>
 								</Box>
 							)}
-							
+
 							{caseDetails.actualCompletionDate && (
 								<Box className="bg-white rounded-lg p-3 shadow-sm">
-									<Typography variant="caption" className="text-purple-600 font-medium block">
+									<Typography
+										variant="caption"
+										className="text-purple-600 font-medium block"
+									>
 										Completed Date
 									</Typography>
-									<Typography variant="body2" className="text-gray-700">
+									<Typography
+										variant="body2"
+										className="text-gray-700"
+									>
 										✅ {new Date(caseDetails.actualCompletionDate).toLocaleDateString()}
 									</Typography>
 								</Box>
@@ -650,12 +761,18 @@ function CaseDetails() {
 				{caseDetails.linkedGuides && caseDetails.linkedGuides.length > 0 && (
 					<Card>
 						<CardContent className="p-5">
-							<Typography variant="h6" className="mb-12">
+							<Typography
+								variant="h6"
+								className="mb-12"
+							>
 								Linked Guides
 							</Typography>
 							<List dense>
 								{caseDetails.linkedGuides.map((guide) => (
-									<ListItem key={guide._id} divider>
+									<ListItem
+										key={guide._id}
+										divider
+									>
 										<ListItemText
 											primary={guide.title}
 											secondary={guide.description}
@@ -672,9 +789,7 @@ function CaseDetails() {
 					<Card>
 						<CardContent className="p-5">
 							<Box className="flex items-center justify-between mb-12">
-								<Typography variant="h6">
-									Workflow Stages & Tasks
-								</Typography>
+								<Typography variant="h6">Workflow Stages & Tasks</Typography>
 								<ButtonGroup size="small">
 									<Button
 										startIcon={<ImportIcon />}
@@ -702,7 +817,11 @@ function CaseDetails() {
 								{caseDetails.stages.map((stage) => {
 									const stageTasks = getTasksForStage(stage._id);
 									return (
-										<Card key={stage._id} variant="outlined" className="border-l-4 border-l-blue-500">
+										<Card
+											key={stage._id}
+											variant="outlined"
+											className="border-l-4 border-l-blue-500"
+										>
 											<CardContent className="p-4">
 												{/* Stage Header */}
 												<Box className="flex items-center justify-between mb-3">
@@ -711,11 +830,17 @@ function CaseDetails() {
 															{stage.sequence}
 														</Box>
 														<div>
-															<Typography variant="h6" className="text-gray-800">
+															<Typography
+																variant="h6"
+																className="text-gray-800"
+															>
 																{stage.name}
 															</Typography>
 															{stage.description && (
-																<Typography variant="body2" color="text.secondary">
+																<Typography
+																	variant="body2"
+																	color="text.secondary"
+																>
 																	{stage.description}
 																</Typography>
 															)}
@@ -731,7 +856,9 @@ function CaseDetails() {
 															size="small"
 															variant="outlined"
 															startIcon={<AddIcon />}
-															onClick={() => handleOpenAddTasksToStage(stage._id, stage.name)}
+															onClick={() =>
+																handleOpenAddTasksToStage(stage._id, stage.name)
+															}
 														>
 															Add Tasks
 														</Button>
@@ -747,28 +874,46 @@ function CaseDetails() {
 												</Box>
 
 												{stage.championId && (
-													<Typography variant="caption" color="text.secondary" className="block mb-3">
-														Champion: {stage.championId.firstName} {stage.championId.lastName}
+													<Typography
+														variant="caption"
+														color="text.secondary"
+														className="block mb-3"
+													>
+														Champion: {stage.championId.firstName}{' '}
+														{stage.championId.lastName}
 													</Typography>
 												)}
 
 												{/* Stage Tasks */}
 												{stageTasks.length > 0 ? (
 													<Box className="mt-4 bg-gray-50 rounded-lg p-3">
-														<Typography variant="subtitle2" className="mb-3 text-gray-700">
+														<Typography
+															variant="subtitle2"
+															className="mb-3 text-gray-700"
+														>
 															Tasks ({stageTasks.length})
 														</Typography>
 														<Box className="space-y-2">
 															{stageTasks.map((task) => (
-																<Card key={task._id} className="bg-white shadow-sm">
+																<Card
+																	key={task._id}
+																	className="bg-white shadow-sm"
+																>
 																	<CardContent className="p-3">
 																		<Box className="flex items-start justify-between">
 																			<Box className="flex-1">
-																				<Typography variant="subtitle2" className="font-medium">
+																				<Typography
+																					variant="subtitle2"
+																					className="font-medium"
+																				>
 																					{task.title || task.name}
 																				</Typography>
 																				{task.description && (
-																					<Typography variant="body2" color="text.secondary" className="mt-1">
+																					<Typography
+																						variant="body2"
+																						color="text.secondary"
+																						className="mt-1"
+																					>
 																						{task.description}
 																					</Typography>
 																				)}
@@ -781,7 +926,11 @@ function CaseDetails() {
 																					<Chip
 																						label={task.priority}
 																						size="small"
-																						color={getPriorityColor(task.priority) as any}
+																						color={
+																							getPriorityColor(
+																								task.priority
+																							) as any
+																						}
 																					/>
 																					{task.dueDate && (
 																						<Chip
@@ -793,8 +942,13 @@ function CaseDetails() {
 																					)}
 																				</Box>
 																				{task.assignedTo && (
-																					<Typography variant="caption" color="text.secondary" className="block mt-2">
-																						👤 {task.assignedTo.firstName} {task.assignedTo.lastName}
+																					<Typography
+																						variant="caption"
+																						color="text.secondary"
+																						className="block mt-2"
+																					>
+																						👤 {task.assignedTo.firstName}{' '}
+																						{task.assignedTo.lastName}
 																					</Typography>
 																				)}
 																			</Box>
@@ -802,7 +956,14 @@ function CaseDetails() {
 																				<IconButton
 																					size="small"
 																					color="error"
-																					onClick={() => handleDeleteTask(task._id, task.title || task.name || 'Unnamed Task')}
+																					onClick={() =>
+																						handleDeleteTask(
+																							task._id,
+																							task.title ||
+																								task.name ||
+																								'Unnamed Task'
+																						)
+																					}
 																					title={`Delete task "${task.title || task.name}"`}
 																				>
 																					<DeleteIcon fontSize="small" />
@@ -816,14 +977,19 @@ function CaseDetails() {
 													</Box>
 												) : (
 													<Box className="mt-4 p-4 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 text-center">
-														<Typography variant="body2" color="text.secondary">
+														<Typography
+															variant="body2"
+															color="text.secondary"
+														>
 															No tasks in this stage yet
 														</Typography>
 														<Button
 															size="small"
 															variant="text"
 															startIcon={<AddIcon />}
-															onClick={() => handleOpenAddTasksToStage(stage._id, stage.name)}
+															onClick={() =>
+																handleOpenAddTasksToStage(stage._id, stage.name)
+															}
 															className="mt-2"
 														>
 															Add First Task
@@ -840,25 +1006,45 @@ function CaseDetails() {
 							{(() => {
 								const unassignedTasks = getUnassignedTasks();
 								return unassignedTasks.length > 0 ? (
-									<Card variant="outlined" className="mt-4 border-l-4 border-l-orange-500">
+									<Card
+										variant="outlined"
+										className="mt-4 border-l-4 border-l-orange-500"
+									>
 										<CardContent className="p-4">
-											<Typography variant="h6" className="mb-3 text-orange-700">
+											<Typography
+												variant="h6"
+												className="mb-3 text-orange-700"
+											>
 												📌 Unassigned Tasks
 											</Typography>
-											<Typography variant="body2" color="text.secondary" className="mb-3">
+											<Typography
+												variant="body2"
+												color="text.secondary"
+												className="mb-3"
+											>
 												These tasks are not assigned to any stage
 											</Typography>
 											<Box className="space-y-2">
 												{unassignedTasks.map((task) => (
-													<Card key={task._id} className="bg-orange-50 border border-orange-200">
+													<Card
+														key={task._id}
+														className="bg-orange-50 border border-orange-200"
+													>
 														<CardContent className="p-3">
 															<Box className="flex items-start justify-between">
 																<Box className="flex-1">
-																	<Typography variant="subtitle2" className="font-medium">
+																	<Typography
+																		variant="subtitle2"
+																		className="font-medium"
+																	>
 																		{task.title || task.name}
 																	</Typography>
 																	{task.description && (
-																		<Typography variant="body2" color="text.secondary" className="mt-1">
+																		<Typography
+																			variant="body2"
+																			color="text.secondary"
+																			className="mt-1"
+																		>
 																			{task.description}
 																		</Typography>
 																	)}
@@ -871,7 +1057,9 @@ function CaseDetails() {
 																		<Chip
 																			label={task.priority}
 																			size="small"
-																			color={getPriorityColor(task.priority) as any}
+																			color={
+																				getPriorityColor(task.priority) as any
+																			}
 																		/>
 																		{task.dueDate && (
 																			<Chip
@@ -882,8 +1070,13 @@ function CaseDetails() {
 																		)}
 																	</Box>
 																	{task.assignedTo && (
-																		<Typography variant="caption" color="text.secondary" className="block mt-2">
-																			👤 {task.assignedTo.firstName} {task.assignedTo.lastName}
+																		<Typography
+																			variant="caption"
+																			color="text.secondary"
+																			className="block mt-2"
+																		>
+																			👤 {task.assignedTo.firstName}{' '}
+																			{task.assignedTo.lastName}
 																		</Typography>
 																	)}
 																</Box>
@@ -891,7 +1084,14 @@ function CaseDetails() {
 																	<IconButton
 																		size="small"
 																		color="error"
-																		onClick={() => handleDeleteTask(task._id, task.title || task.name || 'Unnamed Task')}
+																		onClick={() =>
+																			handleDeleteTask(
+																				task._id,
+																				task.title ||
+																					task.name ||
+																					'Unnamed Task'
+																			)
+																		}
 																		title={`Delete task "${task.title || task.name}"`}
 																	>
 																		<DeleteIcon fontSize="small" />
@@ -912,9 +1112,7 @@ function CaseDetails() {
 					<Card>
 						<CardContent className="p-5">
 							<Box className="flex items-center justify-between mb-12">
-								<Typography variant="h6">
-									Workflow Stages & Tasks
-								</Typography>
+								<Typography variant="h6">Workflow Stages & Tasks</Typography>
 								<ButtonGroup size="small">
 									<Button
 										startIcon={<ImportIcon />}
@@ -937,10 +1135,18 @@ function CaseDetails() {
 								</ButtonGroup>
 							</Box>
 							<Box className="text-center py-16">
-								<Typography variant="h6" color="text.secondary" className="mb-4">
+								<Typography
+									variant="h6"
+									color="text.secondary"
+									className="mb-4"
+								>
 									🚀 Ready to get started?
 								</Typography>
-								<Typography variant="body2" color="text.secondary" className="mb-4">
+								<Typography
+									variant="body2"
+									color="text.secondary"
+									className="mb-4"
+								>
 									Create your first stage or import from a template to begin organizing your workflow
 								</Typography>
 								<Box className="flex justify-center gap-2">
@@ -968,12 +1174,18 @@ function CaseDetails() {
 				{caseDetails.documents && caseDetails.documents.length > 0 && (
 					<Card>
 						<CardContent className="p-5">
-							<Typography variant="h6" className="mb-12">
+							<Typography
+								variant="h6"
+								className="mb-12"
+							>
 								Documents
 							</Typography>
 							<List dense>
 								{caseDetails.documents.map((document) => (
-									<ListItem key={document._id} divider>
+									<ListItem
+										key={document._id}
+										divider
+									>
 										<ListItemText
 											primary={document.originalName}
 											secondary={
@@ -981,8 +1193,13 @@ function CaseDetails() {
 													<Typography variant="body2">
 														Size: {(document.size / 1024).toFixed(2)} KB
 													</Typography>
-													<Typography variant="caption" color="text.secondary">
-														Uploaded by: {document.uploadedBy.firstName} {document.uploadedBy.lastName} on {new Date(document.uploadedAt).toLocaleDateString()}
+													<Typography
+														variant="caption"
+														color="text.secondary"
+													>
+														Uploaded by: {document.uploadedBy.firstName}{' '}
+														{document.uploadedBy.lastName} on{' '}
+														{new Date(document.uploadedAt).toLocaleDateString()}
 													</Typography>
 												</Box>
 											}
@@ -1036,22 +1253,18 @@ function CaseDetails() {
 				aria-labelledby="confirm-dialog-title"
 				aria-describedby="confirm-dialog-description"
 			>
-				<DialogTitle id="confirm-dialog-title">
-					{confirmDialogData?.title}
-				</DialogTitle>
+				<DialogTitle id="confirm-dialog-title">{confirmDialogData?.title}</DialogTitle>
 				<DialogContent>
-					<DialogContentText id="confirm-dialog-description">
-						{confirmDialogData?.message}
-					</DialogContentText>
+					<DialogContentText id="confirm-dialog-description">{confirmDialogData?.message}</DialogContentText>
 				</DialogContent>
 				<DialogActions>
-					<Button 
+					<Button
 						onClick={handleConfirmDialogClose}
 						color="primary"
 					>
 						{confirmDialogData?.cancelText || 'Cancel'}
 					</Button>
-					<Button 
+					<Button
 						onClick={handleConfirmDialogConfirm}
 						color="error"
 						variant="contained"

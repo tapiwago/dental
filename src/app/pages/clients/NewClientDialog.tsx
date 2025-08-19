@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
 	Dialog,
 	DialogTitle,
@@ -15,8 +15,8 @@ import {
 	Chip,
 	Stack
 } from '@mui/material';
-import { Add as AddIcon, Close as CloseIcon } from '@mui/icons-material';
-import { clientApi, fetchJson } from '@/utils/authFetch';
+import { Add as AddIcon } from '@mui/icons-material';
+import { clientApi } from '@/utils/authFetch';
 
 interface NewClientDialogProps {
 	open: boolean;
@@ -57,16 +57,16 @@ function NewClientDialog({ open, onClose, onSuccess }: NewClientDialogProps) {
 	const [newSpecialty, setNewSpecialty] = useState('');
 
 	const handleInputChange = (path: string, value: any) => {
-		setFormData(prev => {
+		setFormData((prev) => {
 			const keys = path.split('.');
 			const updated = { ...prev };
 			let current = updated as any;
-			
+
 			for (let i = 0; i < keys.length - 1; i++) {
 				current[keys[i]] = { ...current[keys[i]] };
 				current = current[keys[i]];
 			}
-			
+
 			current[keys[keys.length - 1]] = value;
 			return updated;
 		});
@@ -74,7 +74,7 @@ function NewClientDialog({ open, onClose, onSuccess }: NewClientDialogProps) {
 
 	const addSpecialty = () => {
 		if (newSpecialty.trim() && !formData.practiceDetails.specialties.includes(newSpecialty.trim())) {
-			setFormData(prev => ({
+			setFormData((prev) => ({
 				...prev,
 				practiceDetails: {
 					...prev.practiceDetails,
@@ -86,11 +86,11 @@ function NewClientDialog({ open, onClose, onSuccess }: NewClientDialogProps) {
 	};
 
 	const removeSpecialty = (specialty: string) => {
-		setFormData(prev => ({
+		setFormData((prev) => ({
 			...prev,
 			practiceDetails: {
 				...prev.practiceDetails,
-				specialties: prev.practiceDetails.specialties.filter(s => s !== specialty)
+				specialties: prev.practiceDetails.specialties.filter((s) => s !== specialty)
 			}
 		}));
 	};
@@ -98,21 +98,23 @@ function NewClientDialog({ open, onClose, onSuccess }: NewClientDialogProps) {
 	const handleSubmit = async () => {
 		try {
 			setLoading(true);
-			
+
 			// Prepare data for API
 			const submitData = {
 				...formData,
 				practiceDetails: {
 					...formData.practiceDetails,
-					numberOfProviders: formData.practiceDetails.numberOfProviders ? 
-						parseInt(formData.practiceDetails.numberOfProviders) : undefined,
-					establishedDate: formData.practiceDetails.establishedDate ? 
-						new Date(formData.practiceDetails.establishedDate).toISOString() : undefined
+					numberOfProviders: formData.practiceDetails.numberOfProviders
+						? parseInt(formData.practiceDetails.numberOfProviders)
+						: undefined,
+					establishedDate: formData.practiceDetails.establishedDate
+						? new Date(formData.practiceDetails.establishedDate).toISOString()
+						: undefined
 				}
 			};
 
 			const response = await clientApi.create(submitData);
-			
+
 			// Check if response is ok
 			if (response.ok) {
 				onSuccess();
@@ -157,10 +159,18 @@ function NewClientDialog({ open, onClose, onSuccess }: NewClientDialogProps) {
 	};
 
 	return (
-		<Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+		<Dialog
+			open={open}
+			onClose={onClose}
+			maxWidth="md"
+			fullWidth
+		>
 			<DialogTitle>Create New Client</DialogTitle>
 			<DialogContent>
-				<Stack spacing={2} sx={{ mt: 1 }}>
+				<Stack
+					spacing={2}
+					sx={{ mt: 1 }}
+				>
 					{/* Basic Information */}
 					<Typography variant="h6">Basic Information</Typography>
 					<Box className="flex gap-2">
@@ -183,7 +193,12 @@ function NewClientDialog({ open, onClose, onSuccess }: NewClientDialogProps) {
 					</Box>
 
 					{/* Contact Information */}
-					<Typography variant="h6" sx={{ mt: 2 }}>Contact Information</Typography>
+					<Typography
+						variant="h6"
+						sx={{ mt: 2 }}
+					>
+						Contact Information
+					</Typography>
 					<Box className="flex gap-2">
 						<TextField
 							fullWidth
@@ -203,7 +218,7 @@ function NewClientDialog({ open, onClose, onSuccess }: NewClientDialogProps) {
 							size="small"
 						/>
 					</Box>
-					
+
 					<Box className="flex gap-2">
 						<TextField
 							fullWidth
@@ -238,7 +253,7 @@ function NewClientDialog({ open, onClose, onSuccess }: NewClientDialogProps) {
 							size="small"
 						/>
 					</Box>
-					
+
 					<Box className="flex gap-2">
 						<TextField
 							fullWidth
@@ -264,7 +279,12 @@ function NewClientDialog({ open, onClose, onSuccess }: NewClientDialogProps) {
 					</Box>
 
 					{/* Practice Details */}
-					<Typography variant="h6" sx={{ mt: 2 }}>Practice Details</Typography>
+					<Typography
+						variant="h6"
+						sx={{ mt: 2 }}
+					>
+						Practice Details
+					</Typography>
 					<Box className="flex gap-2">
 						<TextField
 							fullWidth
@@ -282,7 +302,7 @@ function NewClientDialog({ open, onClose, onSuccess }: NewClientDialogProps) {
 							size="small"
 						/>
 					</Box>
-					
+
 					<Box className="flex gap-2">
 						<TextField
 							fullWidth
@@ -334,9 +354,17 @@ function NewClientDialog({ open, onClose, onSuccess }: NewClientDialogProps) {
 					</Box>
 
 					{/* Client Classification */}
-					<Typography variant="h6" sx={{ mt: 2 }}>Classification</Typography>
+					<Typography
+						variant="h6"
+						sx={{ mt: 2 }}
+					>
+						Classification
+					</Typography>
 					<Box className="flex gap-2">
-						<FormControl fullWidth size="small">
+						<FormControl
+							fullWidth
+							size="small"
+						>
 							<InputLabel>Industry Type</InputLabel>
 							<Select
 								value={formData.industryType}
@@ -349,8 +377,11 @@ function NewClientDialog({ open, onClose, onSuccess }: NewClientDialogProps) {
 								<MenuItem value="Other">Other</MenuItem>
 							</Select>
 						</FormControl>
-						
-						<FormControl fullWidth size="small">
+
+						<FormControl
+							fullWidth
+							size="small"
+						>
 							<InputLabel>Status</InputLabel>
 							<Select
 								value={formData.status}
@@ -363,8 +394,11 @@ function NewClientDialog({ open, onClose, onSuccess }: NewClientDialogProps) {
 								<MenuItem value="Churned">Churned</MenuItem>
 							</Select>
 						</FormControl>
-						
-						<FormControl fullWidth size="small">
+
+						<FormControl
+							fullWidth
+							size="small"
+						>
 							<InputLabel>Priority</InputLabel>
 							<Select
 								value={formData.priority}
@@ -393,10 +427,16 @@ function NewClientDialog({ open, onClose, onSuccess }: NewClientDialogProps) {
 			</DialogContent>
 			<DialogActions>
 				<Button onClick={onClose}>Cancel</Button>
-				<Button 
-					onClick={handleSubmit} 
-					variant="contained" 
-					disabled={loading || !formData.name || !formData.contactInfo.email || !formData.contactInfo.phone || !formData.location}
+				<Button
+					onClick={handleSubmit}
+					variant="contained"
+					disabled={
+						loading ||
+						!formData.name ||
+						!formData.contactInfo.email ||
+						!formData.contactInfo.phone ||
+						!formData.location
+					}
 				>
 					{loading ? 'Creating...' : 'Create Client'}
 				</Button>

@@ -109,31 +109,31 @@ function Onboarding() {
 			'Not Started': 'default',
 			'In Progress': 'primary',
 			'On Hold': 'warning',
-			'Completed': 'success',
-			'Cancelled': 'error'
+			Completed: 'success',
+			Cancelled: 'error'
 		};
 		return colors[status as keyof typeof colors] || 'default';
 	};
 
 	const getPriorityColor = (priority: string) => {
 		const colors = {
-			'Low': 'success',
-			'Medium': 'info',
-			'High': 'warning',
-			'Critical': 'error'
+			Low: 'success',
+			Medium: 'info',
+			High: 'warning',
+			Critical: 'error'
 		};
 		return colors[priority as keyof typeof colors] || 'default';
 	};
 
 	const handlePageChange = (event: unknown, newPage: number) => {
-		setPagination(prev => ({ ...prev, currentPage: newPage + 1 }));
+		setPagination((prev) => ({ ...prev, currentPage: newPage + 1 }));
 	};
 
 	const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-		setPagination(prev => ({ 
-			...prev, 
+		setPagination((prev) => ({
+			...prev,
 			itemsPerPage: parseInt(event.target.value, 10),
-			currentPage: 1 
+			currentPage: 1
 		}));
 	};
 
@@ -187,7 +187,10 @@ function Onboarding() {
 							className="min-w-50"
 							size="small"
 						/>
-						<FormControl className="min-w-50" size="small">
+						<FormControl
+							className="min-w-50"
+							size="small"
+						>
 							<InputLabel>Status</InputLabel>
 							<Select
 								value={statusFilter}
@@ -202,7 +205,10 @@ function Onboarding() {
 								<MenuItem value="Cancelled">Cancelled</MenuItem>
 							</Select>
 						</FormControl>
-						<FormControl className="min-w-50" size="small">
+						<FormControl
+							className="min-w-50"
+							size="small"
+						>
 							<InputLabel>Priority</InputLabel>
 							<Select
 								value={priorityFilter}
@@ -248,13 +254,19 @@ function Onboarding() {
 								<TableBody>
 									{loading ? (
 										<TableRow>
-											<TableCell colSpan={9} align="center">
+											<TableCell
+												colSpan={9}
+												align="center"
+											>
 												<CircularProgress />
 											</TableCell>
 										</TableRow>
 									) : cases.length === 0 ? (
 										<TableRow>
-											<TableCell colSpan={9} align="center">
+											<TableCell
+												colSpan={9}
+												align="center"
+											>
 												<Typography color="text.secondary">
 													No onboarding cases found
 												</Typography>
@@ -262,28 +274,46 @@ function Onboarding() {
 										</TableRow>
 									) : (
 										cases.map((onboardingCase) => (
-											<TableRow key={onboardingCase._id} hover>
+											<TableRow
+												key={onboardingCase._id}
+												hover
+											>
 												<TableCell>
-													<Typography variant="body2" className="font-medium">
+													<Typography
+														variant="body2"
+														className="font-medium"
+													>
 														{onboardingCase.caseId}
 													</Typography>
 												</TableCell>
 												<TableCell>
 													<div>
-														<Typography variant="body2" className="font-medium">
+														<Typography
+															variant="body2"
+															className="font-medium"
+														>
 															{onboardingCase.workflowTypeId?.name || 'Onboarding'}
 														</Typography>
-														<Typography variant="caption" color="text.secondary">
+														<Typography
+															variant="caption"
+															color="text.secondary"
+														>
 															{onboardingCase.workflowTypeId?.prefix || 'OB'}
 														</Typography>
 													</div>
 												</TableCell>
 												<TableCell>
 													<div>
-														<Typography variant="body2" className="font-medium">
+														<Typography
+															variant="body2"
+															className="font-medium"
+														>
 															{onboardingCase.clientId?.name || 'No Client Assigned'}
 														</Typography>
-														<Typography variant="caption" color="text.secondary">
+														<Typography
+															variant="caption"
+															color="text.secondary"
+														>
 															{onboardingCase.clientId?.email || 'N/A'}
 														</Typography>
 													</div>
@@ -317,7 +347,8 @@ function Onboarding() {
 												</TableCell>
 												<TableCell>
 													<Typography variant="body2">
-														{onboardingCase.assignedChampion.firstName} {onboardingCase.assignedChampion.lastName}
+														{onboardingCase.assignedChampion.firstName}{' '}
+														{onboardingCase.assignedChampion.lastName}
 													</Typography>
 												</TableCell>
 												<TableCell>
@@ -327,15 +358,16 @@ function Onboarding() {
 												</TableCell>
 												<TableCell>
 													<Typography variant="body2">
-														{onboardingCase.expectedCompletionDate 
-															? new Date(onboardingCase.expectedCompletionDate).toLocaleDateString()
-															: 'Not set'
-														}
+														{onboardingCase.expectedCompletionDate
+															? new Date(
+																	onboardingCase.expectedCompletionDate
+																).toLocaleDateString()
+															: 'Not set'}
 													</Typography>
 												</TableCell>
 												<TableCell>
-													<IconButton 
-														size="small" 
+													<IconButton
+														size="small"
 														onClick={() => handleViewCase(onboardingCase._id)}
 														color="primary"
 														title="View Case Details"

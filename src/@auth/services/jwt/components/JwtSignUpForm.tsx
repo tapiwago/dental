@@ -57,7 +57,7 @@ function JwtSignUpForm() {
 		const nameParts = displayName.trim().split(' ');
 		const firstName = nameParts[0] || '';
 		const lastName = nameParts.slice(1).join(' ') || '';
-		
+
 		signUp({
 			firstName,
 			lastName,

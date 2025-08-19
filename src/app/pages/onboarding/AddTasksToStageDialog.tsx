@@ -19,10 +19,7 @@ import {
 	CardContent,
 	Divider
 } from '@mui/material';
-import {
-	Task as TaskIcon,
-	Assignment as StageIcon
-} from '@mui/icons-material';
+import { Task as TaskIcon } from '@mui/icons-material';
 import { templateApi, taskApi, fetchJson } from '@/utils/authFetch';
 import useUser from '@/@auth/useUser';
 
@@ -84,21 +81,19 @@ const AddTasksToStageDialog: React.FC<AddTasksToStageDialogProps> = ({
 		setLoading(true);
 		setError(null);
 		console.log('Fetching task templates...');
-		
+
 		try {
 			// Fetch all templates
 			const response = await templateApi.getAll();
 			const data = await fetchJson(response);
 			console.log('API Response:', data);
-			
+
 			// Handle different response structures
 			const templates = data.templates || data || [];
 			console.log('All templates:', templates);
-			
+
 			// Filter for Task type templates
-			const taskTemplates = templates.filter(
-				(template: Template) => template.type === 'Task'
-			);
+			const taskTemplates = templates.filter((template: Template) => template.type === 'Task');
 			console.log('Task templates found:', taskTemplates);
 
 			// Convert Task templates to TaskTemplate format
@@ -123,11 +118,7 @@ const AddTasksToStageDialog: React.FC<AddTasksToStageDialogProps> = ({
 	};
 
 	const handleTaskToggle = (taskId: string) => {
-		setSelectedTasks(prev =>
-			prev.includes(taskId)
-				? prev.filter(id => id !== taskId)
-				: [...prev, taskId]
-		);
+		setSelectedTasks((prev) => (prev.includes(taskId) ? prev.filter((id) => id !== taskId) : [...prev, taskId]));
 	};
 
 	const handleAddTasks = async () => {
@@ -142,22 +133,25 @@ const AddTasksToStageDialog: React.FC<AddTasksToStageDialogProps> = ({
 
 		try {
 			// Prepare tasks data for the API endpoint
-			const tasksToAdd = selectedTasks.map(taskId => {
-				const taskTemplate = taskTemplates.find(t => t.id === taskId);
-				if (!taskTemplate) return null;
+			const tasksToAdd = selectedTasks
+				.map((taskId) => {
+					const taskTemplate = taskTemplates.find((t) => t.id === taskId);
 
-				return {
-					name: taskTemplate.name,
-					description: taskTemplate.description,
-					priority: taskTemplate.priority,
-					status: 'Not Started',
-					estimatedHours: taskTemplate.estimatedHours,
-					isRequired: taskTemplate.isRequired,
-					createdBy: currentUser?.id || currentUser?._id,
-					stageId: stageId,
-					onboardingCaseId: caseId
-				};
-			}).filter(Boolean); // Remove null entries
+					if (!taskTemplate) return null;
+
+					return {
+						name: taskTemplate.name,
+						description: taskTemplate.description,
+						priority: taskTemplate.priority,
+						status: 'Not Started',
+						estimatedHours: taskTemplate.estimatedHours,
+						isRequired: taskTemplate.isRequired,
+						createdBy: currentUser?.id || currentUser?._id,
+						stageId: stageId,
+						onboardingCaseId: caseId
+					};
+				})
+				.filter(Boolean); // Remove null entries
 
 			console.log('Tasks to add:', tasksToAdd);
 
@@ -189,19 +183,32 @@ const AddTasksToStageDialog: React.FC<AddTasksToStageDialogProps> = ({
 	};
 
 	// Group tasks by workflow
-	const groupedTasks = taskTemplates.reduce((acc, task) => {
-		if (!acc[task.workflowName]) {
-			acc[task.workflowName] = [];
-		}
-		acc[task.workflowName].push(task);
-		return acc;
-	}, {} as Record<string, TaskTemplate[]>);
+	const groupedTasks = taskTemplates.reduce(
+		(acc, task) => {
+			if (!acc[task.workflowName]) {
+				acc[task.workflowName] = [];
+			}
+
+			acc[task.workflowName].push(task);
+			return acc;
+		},
+		{} as Record<string, TaskTemplate[]>
+	);
 
 	return (
-		<Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+		<Dialog
+			open={open}
+			onClose={handleClose}
+			maxWidth="md"
+			fullWidth
+		>
 			<DialogTitle>
 				Add Task Templates to Stage
-				<Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+				<Typography
+					variant="body2"
+					color="textSecondary"
+					sx={{ mt: 1 }}
+				>
 					{stageName && (
 						<>
 							Adding tasks to stage: <strong>{stageName}</strong>
@@ -211,36 +218,57 @@ const AddTasksToStageDialog: React.FC<AddTasksToStageDialogProps> = ({
 					Select task templates to add to this stage
 				</Typography>
 			</DialogTitle>
-			
+
 			<DialogContent>
 				{error && (
-					<Alert severity="error" sx={{ mb: 2 }}>
+					<Alert
+						severity="error"
+						sx={{ mb: 2 }}
+					>
 						{error}
 					</Alert>
 				)}
 
 				{loading ? (
-					<Box display="flex" justifyContent="center" p={3}>
+					<Box
+						display="flex"
+						justifyContent="center"
+						p={3}
+					>
 						<CircularProgress />
 					</Box>
 				) : (
 					<Box>
 						{Object.keys(groupedTasks).length === 0 ? (
-							<Typography variant="body2" color="textSecondary" textAlign="center" py={3}>
+							<Typography
+								variant="body2"
+								color="textSecondary"
+								textAlign="center"
+								py={3}
+							>
 								No task templates available to add
 							</Typography>
 						) : (
 							Object.entries(groupedTasks).map(([workflowName, tasks]) => (
-								<Card key={workflowName} sx={{ mb: 2 }}>
+								<Card
+									key={workflowName}
+									sx={{ mb: 2 }}
+								>
 									<CardContent>
-										<Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+										<Typography
+											variant="h6"
+											sx={{ mb: 2, display: 'flex', alignItems: 'center' }}
+										>
 											<TaskIcon sx={{ mr: 1 }} />
 											{workflowName}
 										</Typography>
-										
+
 										<List dense>
 											{tasks.map((task) => (
-												<ListItem key={task.id} sx={{ px: 0 }}>
+												<ListItem
+													key={task.id}
+													sx={{ px: 0 }}
+												>
 													<ListItemIcon>
 														<Checkbox
 															checked={selectedTasks.includes(task.id)}
@@ -249,29 +277,35 @@ const AddTasksToStageDialog: React.FC<AddTasksToStageDialogProps> = ({
 													</ListItemIcon>
 													<ListItemText
 														primary={
-															<Box display="flex" alignItems="center" gap={1}>
-																<Typography variant="subtitle2">
-																	{task.name}
-																</Typography>
-																<Chip 
-																	label={task.priority} 
-																	size="small" 
+															<Box
+																display="flex"
+																alignItems="center"
+																gap={1}
+															>
+																<Typography variant="subtitle2">{task.name}</Typography>
+																<Chip
+																	label={task.priority}
+																	size="small"
 																	variant="outlined"
 																	color={
-																		task.priority === 'Critical' ? 'error' :
-																		task.priority === 'High' ? 'warning' :
-																		task.priority === 'Medium' ? 'info' : 'default'
+																		task.priority === 'Critical'
+																			? 'error'
+																			: task.priority === 'High'
+																				? 'warning'
+																				: task.priority === 'Medium'
+																					? 'info'
+																					: 'default'
 																	}
 																/>
-																<Chip 
-																	label={`${task.estimatedHours}h`} 
-																	size="small" 
-																	variant="outlined" 
+																<Chip
+																	label={`${task.estimatedHours}h`}
+																	size="small"
+																	variant="outlined"
 																/>
 																{task.isRequired && (
-																	<Chip 
-																		label="Required" 
-																		size="small" 
+																	<Chip
+																		label="Required"
+																		size="small"
 																		variant="outlined"
 																		color="secondary"
 																	/>
@@ -291,12 +325,19 @@ const AddTasksToStageDialog: React.FC<AddTasksToStageDialogProps> = ({
 						{selectedTasks.length > 0 && (
 							<Box mt={2}>
 								<Divider sx={{ mb: 2 }} />
-								<Typography variant="subtitle2" gutterBottom>
+								<Typography
+									variant="subtitle2"
+									gutterBottom
+								>
 									Selected Tasks ({selectedTasks.length}):
 								</Typography>
-								<Box display="flex" flexWrap="wrap" gap={1}>
-									{selectedTasks.map(taskId => {
-										const task = taskTemplates.find(t => t.id === taskId);
+								<Box
+									display="flex"
+									flexWrap="wrap"
+									gap={1}
+								>
+									{selectedTasks.map((taskId) => {
+										const task = taskTemplates.find((t) => t.id === taskId);
 										return task ? (
 											<Chip
 												key={taskId}
@@ -313,11 +354,9 @@ const AddTasksToStageDialog: React.FC<AddTasksToStageDialogProps> = ({
 					</Box>
 				)}
 			</DialogContent>
-			
+
 			<DialogActions>
-				<Button onClick={handleClose}>
-					Cancel
-				</Button>
+				<Button onClick={handleClose}>Cancel</Button>
 				<Button
 					onClick={handleAddTasks}
 					variant="contained"

@@ -3,8 +3,8 @@ export const API_BASE_URL = (import.meta?.env?.VITE_API_BASE_URL as string) || '
 
 // Define the types for options and configuration
 type FetchOptions = RequestInit & {
-  requireAuth?: boolean;
-  skipGlobalHeaders?: boolean;
+	requireAuth?: boolean;
+	skipGlobalHeaders?: boolean;
 };
 
 export class FetchApiError extends Error {
@@ -46,8 +46,9 @@ export const removeAuthToken = () => {
 export const getAuthToken = (): string | null => {
 	// First check global headers, then fall back to localStorage
 	const headerToken = globalHeaders.Authorization?.replace('Bearer ', '');
+
 	if (headerToken) return headerToken;
-	
+
 	// Fall back to localStorage
 	return localStorage.getItem('jwt_access_token');
 };
@@ -58,30 +59,25 @@ export const isAuthenticated = (): boolean => {
 
 // Main apiFetch function with interceptors and type safety
 const apiFetch = async (endpoint: string, options: FetchOptions = {}) => {
-	const { 
-		headers, 
-		requireAuth = false, 
-		skipGlobalHeaders = false,
-		...restOptions 
-	} = options;
+	const { headers, requireAuth = false, skipGlobalHeaders = false, ...restOptions } = options;
 	const method = restOptions.method || 'GET';
 	const fullUrl = `${API_BASE_URL}${endpoint}`;
-	
+
 	console.log(`ApiFetch: ${method} ${fullUrl}`);
-	
+
 	// Check authentication requirement
 	if (requireAuth && !isAuthenticated()) {
 		console.error('ApiFetch: Authentication required but user is not authenticated');
-		throw new FetchApiError(401, { 
-			success: false, 
-			error: 'Authentication required' 
+		throw new FetchApiError(401, {
+			success: false,
+			error: 'Authentication required'
 		});
 	}
-	
+
 	// Get the current auth token
 	const currentToken = getAuthToken();
 	const authHeadersToUse = currentToken ? { Authorization: `Bearer ${currentToken}` } : {};
-	
+
 	// Set default headers, including global headers and auth
 	const config: RequestInit = {
 		headers: {
@@ -132,11 +128,11 @@ const apiFetch = async (endpoint: string, options: FetchOptions = {}) => {
 		if (error instanceof FetchApiError) {
 			throw error;
 		}
-		
+
 		console.error('ApiFetch: Network error:', error);
-		throw new FetchApiError(0, { 
-			success: false, 
-			error: 'Network error occurred' 
+		throw new FetchApiError(0, {
+			success: false,
+			error: 'Network error occurred'
 		});
 	}
 };
@@ -207,9 +203,11 @@ export const fetchJson = async (response: Response) => {
 
 export const handleApiResponse = async (response: Response) => {
 	const data = await fetchJson(response);
+
 	if (!response.ok) {
 		throw new FetchApiError(response.status, data);
 	}
+
 	return data;
 };
 
@@ -241,8 +239,7 @@ export const onboardingApi = {
 };
 
 export const authApi = {
-	signin: (credentials: { firstName: string; password: string }) => 
-		apiPost('/api/users/signin', credentials),
+	signin: (credentials: { firstName: string; password: string }) => apiPost('/api/users/signin', credentials),
 	signinWithToken: () => authGet('/api/users/signin-with-token'),
 	register: (userData: any) => apiPost('/api/users/register', userData)
 };

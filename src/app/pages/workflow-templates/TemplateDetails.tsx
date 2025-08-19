@@ -1,12 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
 	Typography,
-	Paper,
 	Box,
 	Chip,
 	Divider,
-	Card,
-	CardContent,
 	List,
 	ListItem,
 	ListItemText,
@@ -23,8 +20,8 @@ import {
 	TableHead,
 	TableRow
 } from '@mui/material';
-import { 
-	ArrowBack as ArrowBackIcon, 
+import {
+	ArrowBack as ArrowBackIcon,
 	ExpandMore as ExpandMoreIcon,
 	Edit as EditIcon,
 	ContentCopy as CloneIcon,
@@ -42,28 +39,28 @@ interface TemplateDetails {
 	description?: string;
 	type: 'OnboardingCase' | 'Stage' | 'Task' | 'WorkflowGuide';
 	configuration: {
-		defaultStages?: Array<{
+		defaultStages?: {
 			name: string;
 			sequence: number;
 			description?: string;
 			estimatedDuration?: number;
 			isRequired: boolean;
-			tasks?: Array<{
+			tasks?: {
 				name: string;
 				description?: string;
 				estimatedHours?: number;
 				isRequired: boolean;
 				priority: string;
 				skillsRequired: string[];
-			}>;
-		}>;
-		defaultSteps?: Array<{
+			}[];
+		}[];
+		defaultSteps?: {
 			title: string;
 			content: string;
 			hintType?: string;
 			mediaType?: string;
 			sequence: number;
-		}>;
+		}[];
 		defaultSettings?: any;
 	};
 	industryType: 'Dental' | 'Medical' | 'Veterinary' | 'General';
@@ -103,16 +100,16 @@ interface TemplateDetails {
 		name: string;
 		templateId: string;
 	};
-	childTemplates?: Array<{
+	childTemplates?: {
 		_id: string;
 		name: string;
 		templateId: string;
-	}>;
-	relatedTemplates?: Array<{
+	}[];
+	relatedTemplates?: {
 		_id: string;
 		name: string;
 		templateId: string;
-	}>;
+	}[];
 	createdAt: string;
 	updatedAt: string;
 }
@@ -152,30 +149,30 @@ function TemplateDetails() {
 
 	const getStatusColor = (status: string) => {
 		const colors = {
-			'Draft': 'default',
-			'Published': 'success',
-			'Deprecated': 'warning',
-			'Archived': 'error'
+			Draft: 'default',
+			Published: 'success',
+			Deprecated: 'warning',
+			Archived: 'error'
 		};
 		return colors[status as keyof typeof colors] || 'default';
 	};
 
 	const getComplexityColor = (complexity: string) => {
 		const colors = {
-			'Simple': 'success',
-			'Standard': 'info',
-			'Complex': 'warning',
-			'Enterprise': 'error'
+			Simple: 'success',
+			Standard: 'info',
+			Complex: 'warning',
+			Enterprise: 'error'
 		};
 		return colors[complexity as keyof typeof colors] || 'default';
 	};
 
 	const getTypeColor = (type: string) => {
 		const colors = {
-			'OnboardingCase': 'primary',
-			'Stage': 'secondary',
-			'Task': 'info',
-			'WorkflowGuide': 'success'
+			OnboardingCase: 'primary',
+			Stage: 'secondary',
+			Task: 'info',
+			WorkflowGuide: 'success'
 		};
 		return colors[type as keyof typeof colors] || 'default';
 	};
@@ -195,7 +192,7 @@ function TemplateDetails() {
 				description: `Copy of ${templateDetails?.description || templateDetails?.name}`
 			});
 			const data = await fetchJson(response);
-			
+
 			if (data._id) {
 				navigate(`/workflow-templates/template/${data._id}`);
 			}
@@ -218,7 +215,7 @@ function TemplateDetails() {
 
 			const response = await templateApi.update(id!, updateData);
 			const data = await fetchJson(response);
-			
+
 			if (data._id) {
 				await fetchTemplateDetails(); // Refresh the details
 			}
@@ -241,7 +238,7 @@ function TemplateDetails() {
 
 			const response = await templateApi.update(id!, updateData);
 			const data = await fetchJson(response);
-			
+
 			if (data._id) {
 				await fetchTemplateDetails(); // Refresh the details
 			}
@@ -261,7 +258,10 @@ function TemplateDetails() {
 	if (error) {
 		return (
 			<Box className="p-5">
-				<Alert severity="error" className="mb-5">
+				<Alert
+					severity="error"
+					className="mb-5"
+				>
 					{error}
 				</Alert>
 				<Button
@@ -278,7 +278,10 @@ function TemplateDetails() {
 	if (!templateDetails) {
 		return (
 			<Box className="p-5">
-				<Alert severity="warning" className="mb-5">
+				<Alert
+					severity="warning"
+					className="mb-5"
+				>
 					Template not found
 				</Alert>
 				<Button
@@ -300,10 +303,16 @@ function TemplateDetails() {
 				<Box className="flex items-center justify-between">
 					<Box className="flex items-center gap-4">
 						<div>
-							<Typography variant="h4" className="font-bold">
+							<Typography
+								variant="h4"
+								className="font-bold"
+							>
 								{templateDetails.name}
 							</Typography>
-							<Typography variant="body1" color="text.secondary">
+							<Typography
+								variant="body1"
+								color="text.secondary"
+							>
 								Template ID: {templateDetails.templateId}
 							</Typography>
 						</div>
@@ -382,126 +391,154 @@ function TemplateDetails() {
 			{/* Template Information */}
 			<Divider className="mb-5" />
 			<Box className="mb-5">
-				<Typography variant="h6" className="mb-5">
+				<Typography
+					variant="h6"
+					className="mb-5"
+				>
 					Template Information
 				</Typography>
 				<Box className="grid grid-cols-1 md:grid-cols-2 gap-16 mb-5">
 					<Box className="space-y-8">
 						{templateDetails.description && (
 							<Box>
-								<Typography variant="body2" color="text.secondary">
+								<Typography
+									variant="body2"
+									color="text.secondary"
+								>
 									Description
 								</Typography>
-								<Typography variant="body1">
-									{templateDetails.description}
-								</Typography>
+								<Typography variant="body1">{templateDetails.description}</Typography>
 							</Box>
 						)}
 						<Box>
-							<Typography variant="body2" color="text.secondary">
+							<Typography
+								variant="body2"
+								color="text.secondary"
+							>
 								Type
 							</Typography>
-							<Typography variant="body1">
-								{templateDetails.type}
-							</Typography>
+							<Typography variant="body1">{templateDetails.type}</Typography>
 						</Box>
 						<Box>
-							<Typography variant="body2" color="text.secondary">
+							<Typography
+								variant="body2"
+								color="text.secondary"
+							>
 								Industry Type
 							</Typography>
-							<Typography variant="body1">
-								{templateDetails.industryType}
-							</Typography>
+							<Typography variant="body1">{templateDetails.industryType}</Typography>
 						</Box>
 						<Box>
-							<Typography variant="body2" color="text.secondary">
+							<Typography
+								variant="body2"
+								color="text.secondary"
+							>
 								Client Size
 							</Typography>
-							<Typography variant="body1">
-								{templateDetails.clientSize}
-							</Typography>
+							<Typography variant="body1">{templateDetails.clientSize}</Typography>
 						</Box>
 						<Box>
-							<Typography variant="body2" color="text.secondary">
+							<Typography
+								variant="body2"
+								color="text.secondary"
+							>
 								Version
 							</Typography>
-							<Typography variant="body1">
-								{templateDetails.version}
-							</Typography>
+							<Typography variant="body1">{templateDetails.version}</Typography>
 						</Box>
 						{templateDetails.estimatedDuration && (
 							<Box>
-								<Typography variant="body2" color="text.secondary">
+								<Typography
+									variant="body2"
+									color="text.secondary"
+								>
 									Estimated Duration
 								</Typography>
-								<Typography variant="body1">
-									{templateDetails.estimatedDuration} days
-								</Typography>
+								<Typography variant="body1">{templateDetails.estimatedDuration} days</Typography>
 							</Box>
 						)}
 						{templateDetails.estimatedCost && (
 							<Box>
-								<Typography variant="body2" color="text.secondary">
+								<Typography
+									variant="body2"
+									color="text.secondary"
+								>
 									Estimated Cost
 								</Typography>
-								<Typography variant="body1">
-									${templateDetails.estimatedCost.toFixed(2)}
-								</Typography>
+								<Typography variant="body1">${templateDetails.estimatedCost.toFixed(2)}</Typography>
 							</Box>
 						)}
 					</Box>
 
 					{/* Analytics */}
 					<Box className="space-y-8">
-						<Typography variant="h6" className="mb-5">
+						<Typography
+							variant="h6"
+							className="mb-5"
+						>
 							Analytics
 						</Typography>
 						<Box>
-							<Typography variant="body2" color="text.secondary">
+							<Typography
+								variant="body2"
+								color="text.secondary"
+							>
 								Usage Count
 							</Typography>
-							<Typography variant="body1">
-								{templateDetails.usageCount}
-							</Typography>
+							<Typography variant="body1">{templateDetails.usageCount}</Typography>
 						</Box>
 						<Box>
-							<Typography variant="body2" color="text.secondary">
+							<Typography
+								variant="body2"
+								color="text.secondary"
+							>
 								Success Rate
 							</Typography>
-							<Typography variant="body1">
-								{templateDetails.successRate}%
-							</Typography>
+							<Typography variant="body1">{templateDetails.successRate}%</Typography>
 						</Box>
 						{templateDetails.averageCompletionTime && (
 							<Box>
-								<Typography variant="body2" color="text.secondary">
+								<Typography
+									variant="body2"
+									color="text.secondary"
+								>
 									Average Completion Time
 								</Typography>
-								<Typography variant="body1">
-									{templateDetails.averageCompletionTime} days
-								</Typography>
+								<Typography variant="body1">{templateDetails.averageCompletionTime} days</Typography>
 							</Box>
 						)}
 						<Box>
-							<Typography variant="body2" color="text.secondary">
+							<Typography
+								variant="body2"
+								color="text.secondary"
+							>
 								Created By
 							</Typography>
 							<Typography variant="body1">
 								{templateDetails.createdBy.firstName} {templateDetails.createdBy.lastName}
 							</Typography>
-							<Typography variant="caption" color="text.secondary">
+							<Typography
+								variant="caption"
+								color="text.secondary"
+							>
 								{new Date(templateDetails.createdAt).toLocaleDateString()}
 							</Typography>
 						</Box>
 						{templateDetails.lastModifiedBy && (
 							<Box>
-								<Typography variant="body2" color="text.secondary">
+								<Typography
+									variant="body2"
+									color="text.secondary"
+								>
 									Last Modified By
 								</Typography>
 								<Typography variant="body1">
 									{templateDetails.lastModifiedBy.firstName} {templateDetails.lastModifiedBy.lastName}
 								</Typography>
-								<Typography variant="caption" color="text.secondary">
+								<Typography
+									variant="caption"
+									color="text.secondary"
+								>
 									{new Date(templateDetails.updatedAt).toLocaleDateString()}
 								</Typography>
 							</Box>
@@ -514,29 +551,52 @@ function TemplateDetails() {
 			{/* Tags and Categories */}
 			{(templateDetails.tags.length > 0 || templateDetails.categories.length > 0) && (
 				<Box className="mb-5">
-					<Typography variant="h6" className="mb-5">
+					<Typography
+						variant="h6"
+						className="mb-5"
+					>
 						Tags & Categories
 					</Typography>
 					{templateDetails.tags.length > 0 && (
 						<Box className="mb-5">
-							<Typography variant="body2" color="text.secondary" className="mb-4">
+							<Typography
+								variant="body2"
+								color="text.secondary"
+								className="mb-4"
+							>
 								Tags
 							</Typography>
 							<Box className="flex flex-wrap gap-4">
 								{templateDetails.tags.map((tag, index) => (
-									<Chip key={index} label={tag} size="small" color="primary" variant="outlined" />
+									<Chip
+										key={index}
+										label={tag}
+										size="small"
+										color="primary"
+										variant="outlined"
+									/>
 								))}
 							</Box>
 						</Box>
 					)}
 					{templateDetails.categories.length > 0 && (
 						<Box>
-							<Typography variant="body2" color="text.secondary" className="mb-4">
+							<Typography
+								variant="body2"
+								color="text.secondary"
+								className="mb-4"
+							>
 								Categories
 							</Typography>
 							<Box className="flex flex-wrap gap-4">
 								{templateDetails.categories.map((category, index) => (
-									<Chip key={index} label={category} size="small" color="secondary" variant="outlined" />
+									<Chip
+										key={index}
+										label={category}
+										size="small"
+										color="secondary"
+										variant="outlined"
+									/>
 								))}
 							</Box>
 						</Box>
@@ -547,97 +607,117 @@ function TemplateDetails() {
 
 			{/* Configuration */}
 			<Box className="mb-5">
-				<Typography variant="h6" className="mb-5">
+				<Typography
+					variant="h6"
+					className="mb-5"
+				>
 					Configuration
 				</Typography>
-				
+
 				{/* Default Stages */}
-				{templateDetails.configuration.defaultStages && templateDetails.configuration.defaultStages.length > 0 && (
-					<Accordion>
-						<AccordionSummary expandIcon={<ExpandMoreIcon />}>
-							<Typography variant="subtitle1">
-								Default Stages ({templateDetails.configuration.defaultStages.length})
-							</Typography>
-						</AccordionSummary>
-						<AccordionDetails>
-							<TableContainer>
-								<Table size="small">
-									<TableHead>
-										<TableRow>
-											<TableCell>Sequence</TableCell>
-											<TableCell>Name</TableCell>
-											<TableCell>Description</TableCell>
-											<TableCell>Duration</TableCell>
-											<TableCell>Required</TableCell>
-											<TableCell>Tasks</TableCell>
-										</TableRow>
-									</TableHead>
-									<TableBody>
-										{templateDetails.configuration.defaultStages.map((stage, index) => (
-											<TableRow key={index}>
-												<TableCell>{stage.sequence}</TableCell>
-												<TableCell>{stage.name}</TableCell>
-												<TableCell>{stage.description || '-'}</TableCell>
-												<TableCell>{stage.estimatedDuration ? `${stage.estimatedDuration} days` : '-'}</TableCell>
-												<TableCell>
-													<Chip
-														label={stage.isRequired ? 'Yes' : 'No'}
-														color={stage.isRequired ? 'success' : 'default'}
-														size="small"
-													/>
-												</TableCell>
-												<TableCell>{stage.tasks?.length || 0}</TableCell>
+				{templateDetails.configuration.defaultStages &&
+					templateDetails.configuration.defaultStages.length > 0 && (
+						<Accordion>
+							<AccordionSummary expandIcon={<ExpandMoreIcon />}>
+								<Typography variant="subtitle1">
+									Default Stages ({templateDetails.configuration.defaultStages.length})
+								</Typography>
+							</AccordionSummary>
+							<AccordionDetails>
+								<TableContainer>
+									<Table size="small">
+										<TableHead>
+											<TableRow>
+												<TableCell>Sequence</TableCell>
+												<TableCell>Name</TableCell>
+												<TableCell>Description</TableCell>
+												<TableCell>Duration</TableCell>
+												<TableCell>Required</TableCell>
+												<TableCell>Tasks</TableCell>
 											</TableRow>
-										))}
-									</TableBody>
-								</Table>
-							</TableContainer>
-						</AccordionDetails>
-					</Accordion>
-				)}
+										</TableHead>
+										<TableBody>
+											{templateDetails.configuration.defaultStages.map((stage, index) => (
+												<TableRow key={index}>
+													<TableCell>{stage.sequence}</TableCell>
+													<TableCell>{stage.name}</TableCell>
+													<TableCell>{stage.description || '-'}</TableCell>
+													<TableCell>
+														{stage.estimatedDuration
+															? `${stage.estimatedDuration} days`
+															: '-'}
+													</TableCell>
+													<TableCell>
+														<Chip
+															label={stage.isRequired ? 'Yes' : 'No'}
+															color={stage.isRequired ? 'success' : 'default'}
+															size="small"
+														/>
+													</TableCell>
+													<TableCell>{stage.tasks?.length || 0}</TableCell>
+												</TableRow>
+											))}
+										</TableBody>
+									</Table>
+								</TableContainer>
+							</AccordionDetails>
+						</Accordion>
+					)}
 
 				{/* Default Steps */}
-				{templateDetails.configuration.defaultSteps && templateDetails.configuration.defaultSteps.length > 0 && (
-					<Accordion className="mt-4">
-						<AccordionSummary expandIcon={<ExpandMoreIcon />}>
-							<Typography variant="subtitle1">
-								Default Steps ({templateDetails.configuration.defaultSteps.length})
-							</Typography>
-						</AccordionSummary>
-						<AccordionDetails>
-							<List>
-								{templateDetails.configuration.defaultSteps.map((step, index) => (
-									<ListItem key={index} divider>
-										<ListItemText
-											primary={`${step.sequence}. ${step.title}`}
-											secondary={step.content}
-										/>
-									</ListItem>
-								))}
-							</List>
-						</AccordionDetails>
-					</Accordion>
-				)}
+				{templateDetails.configuration.defaultSteps &&
+					templateDetails.configuration.defaultSteps.length > 0 && (
+						<Accordion className="mt-4">
+							<AccordionSummary expandIcon={<ExpandMoreIcon />}>
+								<Typography variant="subtitle1">
+									Default Steps ({templateDetails.configuration.defaultSteps.length})
+								</Typography>
+							</AccordionSummary>
+							<AccordionDetails>
+								<List>
+									{templateDetails.configuration.defaultSteps.map((step, index) => (
+										<ListItem
+											key={index}
+											divider
+										>
+											<ListItemText
+												primary={`${step.sequence}. ${step.title}`}
+												secondary={step.content}
+											/>
+										</ListItem>
+									))}
+								</List>
+							</AccordionDetails>
+						</Accordion>
+					)}
 				<Divider className="mt-5" />
 			</Box>
 
 			{/* Related Templates */}
-			{(templateDetails.parentTemplateId || 
-			  (templateDetails.childTemplates && templateDetails.childTemplates.length > 0) ||
-			  (templateDetails.relatedTemplates && templateDetails.relatedTemplates.length > 0)) && (
+			{(templateDetails.parentTemplateId ||
+				(templateDetails.childTemplates && templateDetails.childTemplates.length > 0) ||
+				(templateDetails.relatedTemplates && templateDetails.relatedTemplates.length > 0)) && (
 				<Box className="mb-5">
-					<Typography variant="h6" className="mb-5">
+					<Typography
+						variant="h6"
+						className="mb-5"
+					>
 						Related Templates
 					</Typography>
-					
+
 					{templateDetails.parentTemplateId && (
 						<Box className="mb-5">
-							<Typography variant="subtitle2" className="mb-2">
+							<Typography
+								variant="subtitle2"
+								className="mb-2"
+							>
 								Parent Template
 							</Typography>
 							<Chip
 								label={templateDetails.parentTemplateId.name}
-								onClick={() => navigate(`/workflow-templates/template/${templateDetails.parentTemplateId!._id}`)}
+								onClick={() =>
+									navigate(`/workflow-templates/template/${templateDetails.parentTemplateId!._id}`)
+								}
 								clickable
 								color="primary"
 							/>
@@ -646,7 +726,10 @@ function TemplateDetails() {
 
 					{templateDetails.childTemplates && templateDetails.childTemplates.length > 0 && (
 						<Box className="mb-5">
-							<Typography variant="subtitle2" className="mb-2">
+							<Typography
+								variant="subtitle2"
+								className="mb-2"
+							>
 								Child Templates
 							</Typography>
 							<Box className="flex flex-wrap gap-4">
@@ -665,7 +748,10 @@ function TemplateDetails() {
 
 					{templateDetails.relatedTemplates && templateDetails.relatedTemplates.length > 0 && (
 						<Box>
-							<Typography variant="subtitle2" className="mb-2">
+							<Typography
+								variant="subtitle2"
+								className="mb-2"
+							>
 								Related Templates
 							</Typography>
 							<Box className="flex flex-wrap gap-4">

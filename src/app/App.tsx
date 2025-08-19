@@ -9,6 +9,7 @@ import { enUS } from 'date-fns/locale/en-US';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import ErrorBoundary from '@fuse/utils/ErrorBoundary';
 import Authentication from '@auth/Authentication';
+import InactivityProvider from '@fuse/core/InactivityProvider';
 import MainThemeProvider from '../contexts/MainThemeProvider';
 import store from '@/store/store';
 import routes from '@/configs/routesConfig';
@@ -33,26 +34,29 @@ function App() {
 					{/* Redux Store Provider */}
 					<Provider store={store}>
 						<Authentication>
-							<FuseSettingsProvider>
-								<I18nProvider>
-									{/* Theme Provider */}
-									<MainThemeProvider>
-										{/* Notistack Notification Provider */}
-										<SnackbarProvider
-											maxSnack={5}
-											anchorOrigin={{
-												vertical: 'bottom',
-												horizontal: 'right'
-											}}
-											classes={{
-												containerRoot: 'bottom-0 right-0 mb-13 md:mb-17 mr-2 lg:mr-20 z-99'
-											}}
-										>
-											<FuseLayout layouts={themeLayouts} />
-										</SnackbarProvider>
-									</MainThemeProvider>
-								</I18nProvider>
-							</FuseSettingsProvider>
+							{/* Inactivity Detection Provider */}
+							<InactivityProvider>
+								<FuseSettingsProvider>
+									<I18nProvider>
+										{/* Theme Provider */}
+										<MainThemeProvider>
+											{/* Notistack Notification Provider */}
+											<SnackbarProvider
+												maxSnack={5}
+												anchorOrigin={{
+													vertical: 'bottom',
+													horizontal: 'right'
+												}}
+												classes={{
+													containerRoot: 'bottom-0 right-0 mb-13 md:mb-17 mr-2 lg:mr-20 z-99'
+												}}
+											>
+												<FuseLayout layouts={themeLayouts} />
+											</SnackbarProvider>
+										</MainThemeProvider>
+									</I18nProvider>
+								</FuseSettingsProvider>
+							</InactivityProvider>
 						</Authentication>
 					</Provider>
 				</LocalizationProvider>

@@ -27,6 +27,7 @@ function JwtAuthProvider(props: FuseAuthProviderComponentProps) {
 	// Ensure JWT is set as the auth provider
 	useEffect(() => {
 		const currentProvider = localStorage.getItem('fuseReactAuthProvider');
+
 		if (currentProvider !== 'jwt') {
 			localStorage.setItem('fuseReactAuthProvider', 'jwt');
 			console.error('JWT Auth Provider: Set auth provider to jwt');
@@ -115,6 +116,7 @@ function JwtAuthProvider(props: FuseAuthProviderComponentProps) {
 						isAuthenticated: true,
 						user
 					});
+
 					// Set the auth token for subsequent requests
 					if (tokenStorageValue) {
 						setAuthToken(tokenStorageValue);
@@ -140,7 +142,7 @@ function JwtAuthProvider(props: FuseAuthProviderComponentProps) {
 	const signIn: JwtAuthContextType['signIn'] = useCallback(
 		async (credentials) => {
 			// console.error('JWT Auth Provider: Signing in with credentials:', { firstName: credentials.firstName, password: '***' });
-			
+
 			const response = await authSignIn(credentials);
 
 			// console.error('JWT Auth Provider: Sign in response status:', response.status);
@@ -150,16 +152,16 @@ function JwtAuthProvider(props: FuseAuthProviderComponentProps) {
 				return response;
 			}
 
-			const session = (await response.json()) as { 
+			const session = (await response.json()) as {
 				success: boolean;
-				user: User; 
+				user: User;
 				token: string;
 			};
 
-			// console.error('JWT Auth Provider: Sign in response data:', { 
-			//	success: session.success, 
-			//	user: session.user?.firstName, 
-			//	hasToken: !!session.token 
+			// console.error('JWT Auth Provider: Sign in response data:', {
+			//	success: session.success,
+			//	user: session.user?.firstName,
+			//	hasToken: !!session.token
 			// });
 
 			if (session && session.success) {
@@ -181,7 +183,7 @@ function JwtAuthProvider(props: FuseAuthProviderComponentProps) {
 				});
 				setTokenStorageValue(session.token);
 				setAuthToken(session.token);
-				
+
 				// console.error('JWT Auth Provider: Auth state updated successfully');
 			} else {
 				console.error('JWT Auth Provider: Sign in failed - no success in session or session is null');

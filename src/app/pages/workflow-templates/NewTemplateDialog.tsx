@@ -14,10 +14,9 @@ import {
 	Typography,
 	Chip,
 	FormControlLabel,
-	Switch,
-	Autocomplete
+	Switch
 } from '@mui/material';
-import { templateApi, fetchJson, userApi } from '@/utils/authFetch';
+import { templateApi, fetchJson } from '@/utils/authFetch';
 import useUser from '@/@auth/useUser';
 
 interface NewTemplateDialogProps {
@@ -93,12 +92,15 @@ function NewTemplateDialog({ open, onClose, onSuccess }: NewTemplateDialogProps)
 		if (!name.trim()) {
 			newErrors.name = 'Name is required';
 		}
+
 		if (!type) {
 			newErrors.type = 'Type is required';
 		}
+
 		if (!templateId.trim()) {
 			newErrors.templateId = 'Template ID is required';
 		}
+
 		if (!user?.id && !user?._id) {
 			newErrors.user = 'User information not available';
 		}
@@ -130,8 +132,8 @@ function NewTemplateDialog({ open, onClose, onSuccess }: NewTemplateDialogProps)
 				complexity,
 				estimatedDuration: estimatedDuration ? parseInt(estimatedDuration) : undefined,
 				estimatedCost: estimatedCost ? parseFloat(estimatedCost) : undefined,
-				tags: tags.filter(tag => tag.trim()),
-				categories: categories.filter(cat => cat.trim()),
+				tags: tags.filter((tag) => tag.trim()),
+				categories: categories.filter((cat) => cat.trim()),
 				isDefault,
 				createdBy: user?.id || user?._id,
 				configuration: {
@@ -145,12 +147,14 @@ function NewTemplateDialog({ open, onClose, onSuccess }: NewTemplateDialogProps)
 			console.log('User ID:', user?.id || user?._id);
 
 			const response = await templateApi.create(templateData);
-			
+
 			// Check if response is ok before parsing JSON
 			if (!response.ok) {
 				const errorData = await response.json();
 				console.error('Template creation error response:', errorData);
-				throw new Error(errorData.error || errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+				throw new Error(
+					errorData.error || errorData.message || `HTTP ${response.status}: ${response.statusText}`
+				);
 			}
 
 			const data = await fetchJson(response);
@@ -166,11 +170,13 @@ function NewTemplateDialog({ open, onClose, onSuccess }: NewTemplateDialogProps)
 			console.error('Error creating template:', error);
 			// Extract error message from various possible error formats
 			let errorMessage = 'Failed to create template. Please try again.';
+
 			if (error.message) {
 				errorMessage = error.message;
 			} else if (typeof error === 'string') {
 				errorMessage = error;
 			}
+
 			setErrors({ submit: errorMessage });
 		} finally {
 			setLoading(false);
@@ -185,7 +191,7 @@ function NewTemplateDialog({ open, onClose, onSuccess }: NewTemplateDialogProps)
 	};
 
 	const handleRemoveTag = (tagToRemove: string) => {
-		setTags(tags.filter(tag => tag !== tagToRemove));
+		setTags(tags.filter((tag) => tag !== tagToRemove));
 	};
 
 	const handleAddCategory = () => {
@@ -196,7 +202,7 @@ function NewTemplateDialog({ open, onClose, onSuccess }: NewTemplateDialogProps)
 	};
 
 	const handleRemoveCategory = (categoryToRemove: string) => {
-		setCategories(categories.filter(cat => cat !== categoryToRemove));
+		setCategories(categories.filter((cat) => cat !== categoryToRemove));
 	};
 
 	const handleKeyPress = (event: React.KeyboardEvent, action: () => void) => {
@@ -207,10 +213,10 @@ function NewTemplateDialog({ open, onClose, onSuccess }: NewTemplateDialogProps)
 	};
 
 	return (
-		<Dialog 
-			open={open} 
-			onClose={onClose} 
-			maxWidth="md" 
+		<Dialog
+			open={open}
+			onClose={onClose}
+			maxWidth="md"
 			fullWidth
 			PaperProps={{
 				style: { minHeight: '600px' }
@@ -218,16 +224,24 @@ function NewTemplateDialog({ open, onClose, onSuccess }: NewTemplateDialogProps)
 		>
 			<DialogTitle>Create New Template</DialogTitle>
 			<DialogContent>
-				{(!user?.id && !user?._id) && (
-					<Typography color="error" className="mb-16">
+				{!user?.id && !user?._id && (
+					<Typography
+						color="error"
+						className="mb-16"
+					>
 						User data not loaded. Please refresh the page.
 					</Typography>
 				)}
-				
+
 				<Box className="space-y-16 pt-8">
 					{/* Basic Information */}
 					<Box>
-						<Typography variant="h6" className="mb-12">Basic Information</Typography>
+						<Typography
+							variant="h6"
+							className="mb-12"
+						>
+							Basic Information
+						</Typography>
 						<Box className="grid grid-cols-1 md:grid-cols-2 gap-16">
 							<TextField
 								label="Template Name"
@@ -238,7 +252,11 @@ function NewTemplateDialog({ open, onClose, onSuccess }: NewTemplateDialogProps)
 								fullWidth
 								required
 							/>
-							<FormControl fullWidth required error={!!errors.type}>
+							<FormControl
+								fullWidth
+								required
+								error={!!errors.type}
+							>
 								<InputLabel>Type</InputLabel>
 								<Select
 									value={type}
@@ -251,7 +269,11 @@ function NewTemplateDialog({ open, onClose, onSuccess }: NewTemplateDialogProps)
 									<MenuItem value="WorkflowGuide">Workflow Guide</MenuItem>
 								</Select>
 								{errors.type && (
-									<Typography variant="caption" color="error" className="mt-4">
+									<Typography
+										variant="caption"
+										color="error"
+										className="mt-4"
+									>
 										{errors.type}
 									</Typography>
 								)}
@@ -280,7 +302,12 @@ function NewTemplateDialog({ open, onClose, onSuccess }: NewTemplateDialogProps)
 
 					{/* Classification */}
 					<Box>
-						<Typography variant="h6" className="mb-12">Classification</Typography>
+						<Typography
+							variant="h6"
+							className="mb-12"
+						>
+							Classification
+						</Typography>
 						<Box className="grid grid-cols-1 md:grid-cols-3 gap-16">
 							<FormControl fullWidth>
 								<InputLabel>Industry Type</InputLabel>
@@ -326,7 +353,12 @@ function NewTemplateDialog({ open, onClose, onSuccess }: NewTemplateDialogProps)
 
 					{/* Estimates */}
 					<Box>
-						<Typography variant="h6" className="mb-12">Estimates</Typography>
+						<Typography
+							variant="h6"
+							className="mb-12"
+						>
+							Estimates
+						</Typography>
 						<Box className="grid grid-cols-1 md:grid-cols-2 gap-16">
 							<TextField
 								label="Estimated Duration (days)"
@@ -347,7 +379,12 @@ function NewTemplateDialog({ open, onClose, onSuccess }: NewTemplateDialogProps)
 
 					{/* Tags */}
 					<Box>
-						<Typography variant="h6" className="mb-12">Tags</Typography>
+						<Typography
+							variant="h6"
+							className="mb-12"
+						>
+							Tags
+						</Typography>
 						<Box className="flex gap-8 mb-8">
 							<TextField
 								label="Add Tag"
@@ -357,7 +394,11 @@ function NewTemplateDialog({ open, onClose, onSuccess }: NewTemplateDialogProps)
 								size="small"
 								className="flex-1"
 							/>
-							<Button onClick={handleAddTag} variant="outlined" size="small">
+							<Button
+								onClick={handleAddTag}
+								variant="outlined"
+								size="small"
+							>
 								Add
 							</Button>
 						</Box>
@@ -377,7 +418,12 @@ function NewTemplateDialog({ open, onClose, onSuccess }: NewTemplateDialogProps)
 
 					{/* Categories */}
 					<Box>
-						<Typography variant="h6" className="mb-12">Categories</Typography>
+						<Typography
+							variant="h6"
+							className="mb-12"
+						>
+							Categories
+						</Typography>
 						<Box className="flex gap-8 mb-8">
 							<TextField
 								label="Add Category"
@@ -387,7 +433,11 @@ function NewTemplateDialog({ open, onClose, onSuccess }: NewTemplateDialogProps)
 								size="small"
 								className="flex-1"
 							/>
-							<Button onClick={handleAddCategory} variant="outlined" size="small">
+							<Button
+								onClick={handleAddCategory}
+								variant="outlined"
+								size="small"
+							>
 								Add
 							</Button>
 						</Box>
@@ -407,7 +457,12 @@ function NewTemplateDialog({ open, onClose, onSuccess }: NewTemplateDialogProps)
 
 					{/* Options */}
 					<Box>
-						<Typography variant="h6" className="mb-12">Options</Typography>
+						<Typography
+							variant="h6"
+							className="mb-12"
+						>
+							Options
+						</Typography>
 						<FormControlLabel
 							control={
 								<Switch
@@ -420,25 +475,34 @@ function NewTemplateDialog({ open, onClose, onSuccess }: NewTemplateDialogProps)
 					</Box>
 
 					{errors.submit && (
-						<Typography color="error" variant="body2">
+						<Typography
+							color="error"
+							variant="body2"
+						>
 							{errors.submit}
 						</Typography>
 					)}
-					
+
 					{errors.user && (
-						<Typography color="error" variant="body2">
+						<Typography
+							color="error"
+							variant="body2"
+						>
 							{errors.user}
 						</Typography>
 					)}
 				</Box>
 			</DialogContent>
 			<DialogActions>
-				<Button onClick={onClose} disabled={loading}>
+				<Button
+					onClick={onClose}
+					disabled={loading}
+				>
 					Cancel
 				</Button>
-				<Button 
-					onClick={handleSubmit} 
-					variant="contained" 
+				<Button
+					onClick={handleSubmit}
+					variant="contained"
 					disabled={loading || (!user?.id && !user?._id)}
 				>
 					{loading ? 'Creating...' : 'Create Template'}
