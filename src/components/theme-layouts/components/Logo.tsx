@@ -1,6 +1,5 @@
 import { styled } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
-import MainProjectSelection from '@/components/MainProjectSelection';
 
 const Root = styled('div')(({ theme }) => ({
 	'& > .logo-icon': {

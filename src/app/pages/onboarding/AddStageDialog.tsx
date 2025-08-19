@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
 	Dialog,
 	DialogTitle,
@@ -23,15 +23,9 @@ import {
 	Chip,
 	CircularProgress,
 	Card,
-	CardContent,
-	List,
-	ListItem,
-	ListItemIcon
+	CardContent
 } from '@mui/material';
-import {
-	Assignment as StageIcon,
-	Task as TaskIcon
-} from '@mui/icons-material';
+import { Assignment as StageIcon, Task as TaskIcon } from '@mui/icons-material';
 import { stageApi, taskApi, templateApi, fetchJson } from '@/utils/authFetch';
 import useUser from '@/@auth/useUser';
 
@@ -51,12 +45,12 @@ interface StageTemplate {
 		sequence?: number;
 		estimatedDuration?: number;
 		isRequired?: boolean;
-		tasks?: Array<{
+		tasks?: {
 			name: string;
 			description: string;
 			priority: string;
 			estimatedHours: number;
-		}>;
+		}[];
 	};
 }
 
@@ -65,7 +59,7 @@ function AddStageDialog({ open, onClose, onSuccess, caseId }: AddStageDialogProp
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState('');
 	const [activeTab, setActiveTab] = useState(0);
-	
+
 	// Manual entry fields
 	const [name, setName] = useState('');
 	const [description, setDescription] = useState('');
@@ -89,13 +83,11 @@ function AddStageDialog({ open, onClose, onSuccess, caseId }: AddStageDialogProp
 		try {
 			const response = await templateApi.getAll();
 			const data = await fetchJson(response);
-			
+
 			// Handle different response structures and filter for Stage type templates
 			const templates = data.templates || data || [];
-			const stageTemplates = templates.filter(
-				(template: StageTemplate) => template.type === 'Stage'
-			);
-			
+			const stageTemplates = templates.filter((template: StageTemplate) => template.type === 'Stage');
+
 			setStageTemplates(stageTemplates);
 		} catch (error) {
 			console.error('Error fetching stage templates:', error);
@@ -112,6 +104,7 @@ function AddStageDialog({ open, onClose, onSuccess, caseId }: AddStageDialogProp
 				setError('Stage name is required');
 				return false;
 			}
+
 			if (!sequence.trim() || isNaN(Number(sequence))) {
 				setError('Valid sequence number is required');
 				return false;
@@ -123,11 +116,12 @@ function AddStageDialog({ open, onClose, onSuccess, caseId }: AddStageDialogProp
 				return false;
 			}
 		}
-		
+
 		if (!user?.id) {
 			setError('User information not available');
 			return false;
 		}
+
 		return true;
 	};
 
@@ -183,15 +177,17 @@ function AddStageDialog({ open, onClose, onSuccess, caseId }: AddStageDialogProp
 		params.append('onboardingCase', caseId);
 		const existingStagesResponse = await stageApi.getAll(params);
 		const existingStagesData = await fetchJson(existingStagesResponse);
-		
+
 		let maxSequence = 0;
+
 		if (existingStagesData && Array.isArray(existingStagesData)) {
 			maxSequence = Math.max(0, ...existingStagesData.map((stage: any) => stage.sequence || 0));
 		}
 
 		// Create stages from selected templates
 		for (const templateId of selectedTemplates) {
-			const template = stageTemplates.find(t => t._id === templateId);
+			const template = stageTemplates.find((t) => t._id === templateId);
+
 			if (!template) continue;
 
 			maxSequence += 1;
@@ -214,7 +210,7 @@ function AddStageDialog({ open, onClose, onSuccess, caseId }: AddStageDialogProp
 				// Create tasks for this stage
 				for (let taskIndex = 0; taskIndex < template.configuration.tasks.length; taskIndex++) {
 					const task = template.configuration.tasks[taskIndex];
-					
+
 					const taskData = {
 						name: task.name,
 						description: task.description,
@@ -303,7 +299,11 @@ function AddStageDialog({ open, onClose, onSuccess, caseId }: AddStageDialogProp
 					}
 					label="Required Stage"
 				/>
-				<Typography variant="caption" color="text.secondary" className="block mt-4">
+				<Typography
+					variant="caption"
+					color="text.secondary"
+					className="block mt-4"
+				>
 					Whether this stage must be completed
 				</Typography>
 			</Box>
@@ -313,13 +313,22 @@ function AddStageDialog({ open, onClose, onSuccess, caseId }: AddStageDialogProp
 	const renderTemplateSelection = () => (
 		<Box>
 			{loadingTemplates ? (
-				<Box display="flex" justifyContent="center" p={3}>
+				<Box
+					display="flex"
+					justifyContent="center"
+					p={3}
+				>
 					<CircularProgress />
 				</Box>
 			) : (
 				<>
-					<Typography variant="body2" color="text.secondary" className="mb-16">
-						Select multiple stage templates to add to your onboarding case. Each template will be created as a separate stage.
+					<Typography
+						variant="body2"
+						color="text.secondary"
+						className="mb-16"
+					>
+						Select multiple stage templates to add to your onboarding case. Each template will be created as
+						a separate stage.
 					</Typography>
 
 					{stageTemplates.length === 0 ? (
@@ -328,7 +337,10 @@ function AddStageDialog({ open, onClose, onSuccess, caseId }: AddStageDialogProp
 						</Alert>
 					) : (
 						<>
-							<FormControl fullWidth className="mb-16">
+							<FormControl
+								fullWidth
+								className="mb-16"
+							>
 								<InputLabel>Select Stage Templates</InputLabel>
 								<Select
 									multiple
@@ -338,12 +350,12 @@ function AddStageDialog({ open, onClose, onSuccess, caseId }: AddStageDialogProp
 									renderValue={(selected) => (
 										<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
 											{selected.map((value) => {
-												const template = stageTemplates.find(t => t._id === value);
+												const template = stageTemplates.find((t) => t._id === value);
 												return (
-													<Chip 
-														key={value} 
-														label={template?.name || value} 
-														size="small" 
+													<Chip
+														key={value}
+														label={template?.name || value}
+														size="small"
 													/>
 												);
 											})}
@@ -351,9 +363,12 @@ function AddStageDialog({ open, onClose, onSuccess, caseId }: AddStageDialogProp
 									)}
 								>
 									{stageTemplates.map((template) => (
-										<MenuItem key={template._id} value={template._id}>
+										<MenuItem
+											key={template._id}
+											value={template._id}
+										>
 											<Checkbox checked={selectedTemplates.indexOf(template._id) > -1} />
-											<ListItemText 
+											<ListItemText
 												primary={template.name}
 												secondary={template.description}
 											/>
@@ -364,29 +379,40 @@ function AddStageDialog({ open, onClose, onSuccess, caseId }: AddStageDialogProp
 
 							{selectedTemplates.length > 0 && (
 								<Box>
-									<Typography variant="subtitle2" className="mb-8">
+									<Typography
+										variant="subtitle2"
+										className="mb-8"
+									>
 										Selected Templates ({selectedTemplates.length}):
 									</Typography>
-									{selectedTemplates.map(templateId => {
-										const template = stageTemplates.find(t => t._id === templateId);
+									{selectedTemplates.map((templateId) => {
+										const template = stageTemplates.find((t) => t._id === templateId);
 										return template ? (
-											<Card key={templateId} sx={{ mb: 1 }}>
+											<Card
+												key={templateId}
+												sx={{ mb: 1 }}
+											>
 												<CardContent sx={{ py: 1, '&:last-child': { pb: 1 } }}>
-													<Box display="flex" alignItems="center" gap={1}>
+													<Box
+														display="flex"
+														alignItems="center"
+														gap={1}
+													>
 														<StageIcon fontSize="small" />
-														<Typography variant="subtitle2">
-															{template.name}
-														</Typography>
+														<Typography variant="subtitle2">{template.name}</Typography>
 														{template.configuration?.tasks?.length > 0 && (
-															<Chip 
-																size="small" 
+															<Chip
+																size="small"
 																label={`${template.configuration.tasks.length} tasks`}
 																icon={<TaskIcon />}
 															/>
 														)}
 													</Box>
 													{template.description && (
-														<Typography variant="caption" color="text.secondary">
+														<Typography
+															variant="caption"
+															color="text.secondary"
+														>
 															{template.description}
 														</Typography>
 													)}
@@ -404,20 +430,36 @@ function AddStageDialog({ open, onClose, onSuccess, caseId }: AddStageDialogProp
 	);
 
 	return (
-		<Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+		<Dialog
+			open={open}
+			onClose={handleClose}
+			maxWidth="md"
+			fullWidth
+		>
 			<DialogTitle>Add Stage(s)</DialogTitle>
 			<DialogContent>
-				<Typography variant="body2" color="text.secondary" className="mb-16">
+				<Typography
+					variant="body2"
+					color="text.secondary"
+					className="mb-16"
+				>
 					Add stages to the onboarding case manually or from templates.
 				</Typography>
 
 				{error && (
-					<Alert severity="error" className="mb-16">
+					<Alert
+						severity="error"
+						className="mb-16"
+					>
 						{error}
 					</Alert>
 				)}
 
-				<Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)} className="mb-16">
+				<Tabs
+					value={activeTab}
+					onChange={(e, newValue) => setActiveTab(newValue)}
+					className="mb-16"
+				>
 					<Tab label="Manual Entry" />
 					<Tab label="From Templates" />
 				</Tabs>
@@ -425,7 +467,10 @@ function AddStageDialog({ open, onClose, onSuccess, caseId }: AddStageDialogProp
 				{activeTab === 0 ? renderManualEntry() : renderTemplateSelection()}
 			</DialogContent>
 			<DialogActions>
-				<Button onClick={handleClose} disabled={loading}>
+				<Button
+					onClick={handleClose}
+					disabled={loading}
+				>
 					Cancel
 				</Button>
 				<Button
@@ -433,7 +478,11 @@ function AddStageDialog({ open, onClose, onSuccess, caseId }: AddStageDialogProp
 					variant="contained"
 					disabled={loading || (activeTab === 1 && selectedTemplates.length === 0)}
 				>
-					{loading ? 'Creating...' : activeTab === 0 ? 'Create Stage' : `Create ${selectedTemplates.length} Stage${selectedTemplates.length !== 1 ? 's' : ''}`}
+					{loading
+						? 'Creating...'
+						: activeTab === 0
+							? 'Create Stage'
+							: `Create ${selectedTemplates.length} Stage${selectedTemplates.length !== 1 ? 's' : ''}`}
 				</Button>
 			</DialogActions>
 		</Dialog>

@@ -4,10 +4,6 @@ import { useEffect } from 'react';
 import { z } from 'zod';
 import _ from 'lodash';
 import TextField from '@mui/material/TextField';
-import FormControl from '@mui/material/FormControl';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
-import Link from '@fuse/core/Link';
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
 import useJwtAuth from '../useJwtAuth';
@@ -59,32 +55,32 @@ function JwtSignInForm() {
 			firstName,
 			password
 		})
-		.then(() => {
-			console.log('JwtSignInForm: Sign in successful!');
-		})
-		.catch((error: FetchApiError) => {
-			console.error('Sign in error:', error);
-			
-			// Handle different types of errors
-			if (error instanceof FetchApiError) {
-				const errorData = error.data as {
-					success: boolean;
-					error: string;
-				};
+			.then(() => {
+				console.log('JwtSignInForm: Sign in successful!');
+			})
+			.catch((error: FetchApiError) => {
+				console.error('Sign in error:', error);
 
-				// Set a general error message
-				setError('root', {
-					type: 'manual',
-					message: errorData?.error || 'Invalid credentials. Please check your first name and password.'
-				});
-			} else {
-				// Handle network or other errors
-				setError('root', {
-					type: 'manual',
-					message: 'Network error. Please try again.'
-				});
-			}
-		});
+				// Handle different types of errors
+				if (error instanceof FetchApiError) {
+					const errorData = error.data as {
+						success: boolean;
+						error: string;
+					};
+
+					// Set a general error message
+					setError('root', {
+						type: 'manual',
+						message: errorData?.error || 'Invalid credentials. Please check your first name and password.'
+					});
+				} else {
+					// Handle network or other errors
+					setError('root', {
+						type: 'manual',
+						message: 'Network error. Please try again.'
+					});
+				}
+			});
 	}
 
 	return (
@@ -95,7 +91,10 @@ function JwtSignInForm() {
 			onSubmit={handleSubmit(onSubmit)}
 		>
 			{errors.root && (
-				<Alert severity="error" className="mb-4">
+				<Alert
+					severity="error"
+					className="mb-4"
+				>
 					{errors.root.message}
 				</Alert>
 			)}

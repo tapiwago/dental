@@ -5,3 +5,5 @@ export { default as useUpdateEffect } from './useUpdateEffect';
 export { default as useDeepCompareEffect } from './useDeepCompareEffect';
 export { default as useThemeMediaQuery } from './useThemeMediaQuery';
 export { default as useEventListener } from './useEventListener';
+export { default as useInactivityDetection } from './useInactivityDetection';
+export { default as useSoundEffects } from './useSoundEffects';

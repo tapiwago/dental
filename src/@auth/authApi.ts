@@ -32,7 +32,13 @@ export async function authSignIn(credentials: { firstName: string; password: str
 /**
  * Sign up
  */
-export async function authSignUp(data: { firstName: string; lastName: string; password: string; email?: string; role?: string }): Promise<Response> {
+export async function authSignUp(data: {
+	firstName: string;
+	lastName: string;
+	password: string;
+	email?: string;
+	role?: string;
+}): Promise<Response> {
 	return apiFetch('/api/users/register', {
 		method: 'POST',
 		body: JSON.stringify(data)

@@ -20,8 +20,8 @@ import {
 	IconButton,
 	Tooltip
 } from '@mui/material';
-import { 
-	Add as AddIcon, 
+import {
+	Add as AddIcon,
 	Visibility as ViewIcon,
 	Edit as EditIcon,
 	ContentCopy as CloneIcon,
@@ -149,41 +149,41 @@ function WorkflowTemplates() {
 
 	const getStatusColor = (status: string) => {
 		const colors = {
-			'Draft': 'default',
-			'Published': 'success',
-			'Deprecated': 'warning',
-			'Archived': 'error'
+			Draft: 'default',
+			Published: 'success',
+			Deprecated: 'warning',
+			Archived: 'error'
 		};
 		return colors[status as keyof typeof colors] || 'default';
 	};
 
 	const getComplexityColor = (complexity: string) => {
 		const colors = {
-			'Simple': 'success',
-			'Standard': 'info',
-			'Complex': 'warning',
-			'Enterprise': 'error'
+			Simple: 'success',
+			Standard: 'info',
+			Complex: 'warning',
+			Enterprise: 'error'
 		};
 		return colors[complexity as keyof typeof colors] || 'default';
 	};
 
 	const getTypeColor = (type: string) => {
 		const colors = {
-			'OnboardingCase': 'primary',
-			'Stage': 'secondary',
-			'Task': 'info',
-			'WorkflowGuide': 'success'
+			OnboardingCase: 'primary',
+			Stage: 'secondary',
+			Task: 'info',
+			WorkflowGuide: 'success'
 		};
 		return colors[type as keyof typeof colors] || 'default';
 	};
 
 	const handlePageChange = (event: unknown, newPage: number) => {
-		setPagination(prev => ({ ...prev, currentPage: newPage + 1 }));
+		setPagination((prev) => ({ ...prev, currentPage: newPage + 1 }));
 	};
 
 	const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		setRowsPerPage(parseInt(event.target.value, 10));
-		setPagination(prev => ({ ...prev, currentPage: 1 }));
+		setPagination((prev) => ({ ...prev, currentPage: 1 }));
 	};
 
 	const handleViewTemplate = (templateId: string) => {
@@ -201,7 +201,7 @@ function WorkflowTemplates() {
 				description: 'Cloned template'
 			});
 			const data = await fetchJson(response);
-			
+
 			if (data._id) {
 				await fetchTemplates(); // Refresh the list
 			}
@@ -247,7 +247,10 @@ function WorkflowTemplates() {
 						className="min-w-50"
 						size="small"
 					/>
-					<FormControl className="min-w-50" size="small">
+					<FormControl
+						className="min-w-50"
+						size="small"
+					>
 						<InputLabel>Type</InputLabel>
 						<Select
 							value={typeFilter}
@@ -261,7 +264,10 @@ function WorkflowTemplates() {
 							<MenuItem value="WorkflowGuide">Workflow Guide</MenuItem>
 						</Select>
 					</FormControl>
-					<FormControl className="min-w-50" size="small">
+					<FormControl
+						className="min-w-50"
+						size="small"
+					>
 						<InputLabel>Status</InputLabel>
 						<Select
 							value={statusFilter}
@@ -275,7 +281,10 @@ function WorkflowTemplates() {
 							<MenuItem value="Archived">Archived</MenuItem>
 						</Select>
 					</FormControl>
-					<FormControl className="min-w-50" size="small">
+					<FormControl
+						className="min-w-50"
+						size="small"
+					>
 						<InputLabel>Industry</InputLabel>
 						<Select
 							value={industryFilter}
@@ -289,7 +298,10 @@ function WorkflowTemplates() {
 							<MenuItem value="General">General</MenuItem>
 						</Select>
 					</FormControl>
-					<FormControl className="min-w-50" size="small">
+					<FormControl
+						className="min-w-50"
+						size="small"
+					>
 						<InputLabel>Complexity</InputLabel>
 						<Select
 							value={complexityFilter}
@@ -339,28 +351,41 @@ function WorkflowTemplates() {
 							<TableBody>
 								{loading ? (
 									<TableRow>
-										<TableCell colSpan={11} align="center">
+										<TableCell
+											colSpan={11}
+											align="center"
+										>
 											<CircularProgress />
 										</TableCell>
 									</TableRow>
 								) : templates.length === 0 ? (
 									<TableRow>
-										<TableCell colSpan={11} align="center">
-											<Typography color="text.secondary">
-												No templates found
-											</Typography>
+										<TableCell
+											colSpan={11}
+											align="center"
+										>
+											<Typography color="text.secondary">No templates found</Typography>
 										</TableCell>
 									</TableRow>
 								) : (
 									templates.map((template) => (
-										<TableRow key={template._id} hover>
+										<TableRow
+											key={template._id}
+											hover
+										>
 											<TableCell>
 												<div>
-													<Typography variant="body2" className="font-medium">
+													<Typography
+														variant="body2"
+														className="font-medium"
+													>
 														{template.name}
 													</Typography>
 													{template.description && (
-														<Typography variant="caption" color="text.secondary">
+														<Typography
+															variant="caption"
+															color="text.secondary"
+														>
 															{template.description}
 														</Typography>
 													)}
@@ -381,9 +406,7 @@ function WorkflowTemplates() {
 												/>
 											</TableCell>
 											<TableCell>
-												<Typography variant="body2">
-													{template.industryType}
-												</Typography>
+												<Typography variant="body2">{template.industryType}</Typography>
 											</TableCell>
 											<TableCell>
 												<Chip
@@ -393,25 +416,25 @@ function WorkflowTemplates() {
 												/>
 											</TableCell>
 											<TableCell>
-												<Typography variant="body2">
-													{template.usageCount}
-												</Typography>
+												<Typography variant="body2">{template.usageCount}</Typography>
 											</TableCell>
 											<TableCell>
-												<Typography variant="body2">
-													{template.successRate}%
-												</Typography>
+												<Typography variant="body2">{template.successRate}%</Typography>
 											</TableCell>
 											<TableCell>
-												<Typography variant="body2">
-													{template.version}
-												</Typography>
+												<Typography variant="body2">{template.version}</Typography>
 											</TableCell>
 											<TableCell>
 												{template.isDefault ? (
-													<StarIcon color="primary" fontSize="small" />
+													<StarIcon
+														color="primary"
+														fontSize="small"
+													/>
 												) : (
-													<StarBorderIcon color="disabled" fontSize="small" />
+													<StarBorderIcon
+														color="disabled"
+														fontSize="small"
+													/>
 												)}
 											</TableCell>
 											<TableCell>
@@ -422,8 +445,8 @@ function WorkflowTemplates() {
 											<TableCell>
 												<Box className="flex gap-1">
 													<Tooltip title="View Details">
-														<IconButton 
-															size="small" 
+														<IconButton
+															size="small"
 															onClick={() => handleViewTemplate(template._id)}
 															color="primary"
 														>
@@ -431,8 +454,8 @@ function WorkflowTemplates() {
 														</IconButton>
 													</Tooltip>
 													<Tooltip title="Edit Template">
-														<IconButton 
-															size="small" 
+														<IconButton
+															size="small"
 															onClick={() => handleEditTemplate(template._id)}
 															color="secondary"
 														>
@@ -440,8 +463,8 @@ function WorkflowTemplates() {
 														</IconButton>
 													</Tooltip>
 													<Tooltip title="Clone Template">
-														<IconButton 
-															size="small" 
+														<IconButton
+															size="small"
 															onClick={() => handleCloneTemplate(template._id)}
 															color="info"
 														>
@@ -450,8 +473,8 @@ function WorkflowTemplates() {
 													</Tooltip>
 													{template.status === 'Draft' && (
 														<Tooltip title="Publish Template">
-															<IconButton 
-																size="small" 
+															<IconButton
+																size="small"
 																onClick={() => handlePublishTemplate(template._id)}
 																color="success"
 															>
@@ -460,8 +483,8 @@ function WorkflowTemplates() {
 														</Tooltip>
 													)}
 													<Tooltip title="Delete Template">
-														<IconButton 
-															size="small" 
+														<IconButton
+															size="small"
 															onClick={() => handleDeleteTemplate(template._id)}
 															color="error"
 														>

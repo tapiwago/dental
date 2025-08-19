@@ -106,9 +106,7 @@ function NewCaseDialog({ open, onClose, onSuccess }: NewCaseDialogProps) {
 			// Filter champions on the client side for now
 			const championRoles = ['Champion', 'Senior Champion', 'Admin'];
 			const allUsers = data.users || [];
-			const filteredChampions = allUsers.filter((user: User) => 
-				championRoles.includes(user.role)
-			);
+			const filteredChampions = allUsers.filter((user: User) => championRoles.includes(user.role));
 			setChampions(filteredChampions);
 		} catch (error) {
 			console.error('Error fetching champions:', error);
@@ -120,11 +118,12 @@ function NewCaseDialog({ open, onClose, onSuccess }: NewCaseDialogProps) {
 			const response = await workflowTypeApi.getAll();
 			const data = await fetchJson(response);
 			setWorkflowTypes(data.data || []);
-			
+
 			// Set default workflow type if available
 			const defaultWorkflowType = data.data?.find((wt: WorkflowType) => wt.isDefault);
+
 			if (defaultWorkflowType && !formData.workflowTypeId) {
-				setFormData(prev => ({ ...prev, workflowTypeId: defaultWorkflowType._id }));
+				setFormData((prev) => ({ ...prev, workflowTypeId: defaultWorkflowType._id }));
 				// Generate case ID with the default workflow type prefix
 				setTimeout(() => {
 					generateCaseId(defaultWorkflowType._id);
@@ -137,22 +136,26 @@ function NewCaseDialog({ open, onClose, onSuccess }: NewCaseDialogProps) {
 
 	const generateCaseId = (workflowTypeId?: string) => {
 		let prefix = 'OB'; // Default prefix
-		
+
 		if (workflowTypeId && workflowTypes.length > 0) {
-			const selectedWorkflowType = workflowTypes.find(wt => wt._id === workflowTypeId);
+			const selectedWorkflowType = workflowTypes.find((wt) => wt._id === workflowTypeId);
+
 			if (selectedWorkflowType) {
 				prefix = selectedWorkflowType.prefix;
 			}
 		} else if (formData.workflowTypeId && workflowTypes.length > 0) {
-			const selectedWorkflowType = workflowTypes.find(wt => wt._id === formData.workflowTypeId);
+			const selectedWorkflowType = workflowTypes.find((wt) => wt._id === formData.workflowTypeId);
+
 			if (selectedWorkflowType) {
 				prefix = selectedWorkflowType.prefix;
 			}
 		}
-		
+
 		const timestamp = Date.now();
-		const randomNum = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-		setFormData(prev => ({ ...prev, caseId: `${prefix}-${randomNum}` }));
+		const randomNum = Math.floor(Math.random() * 10000)
+			.toString()
+			.padStart(4, '0');
+		setFormData((prev) => ({ ...prev, caseId: `${prefix}-${randomNum}` }));
 	};
 
 	const handleSubmit = async (e: React.FormEvent) => {
@@ -207,16 +210,23 @@ function NewCaseDialog({ open, onClose, onSuccess }: NewCaseDialogProps) {
 				}
 			} catch (error: any) {
 				console.error('Error creating case:', error);
-				
+
 				// Check for duplicate key error and retry with new case ID (max 3 attempts)
-				if (attempts < 3 && error.status === 400 && error.data?.error && error.data.error.includes('duplicate key error')) {
-					console.log(`Duplicate case ID detected (attempt ${attempts + 1}), generating new one and retrying...`);
+				if (
+					attempts < 3 &&
+					error.status === 400 &&
+					error.data?.error &&
+					error.data.error.includes('duplicate key error')
+				) {
+					console.log(
+						`Duplicate case ID detected (attempt ${attempts + 1}), generating new one and retrying...`
+					);
 					generateCaseId();
 					// Wait a bit and retry
-					await new Promise(resolve => setTimeout(resolve, 100));
+					await new Promise((resolve) => setTimeout(resolve, 100));
 					return attemptSubmission(attempts + 1);
 				}
-				
+
 				if (error.status === 400 && error.data?.error) {
 					setError(error.data.error);
 				} else {
@@ -231,8 +241,8 @@ function NewCaseDialog({ open, onClose, onSuccess }: NewCaseDialogProps) {
 	};
 
 	const handleChange = (field: keyof FormData, value: any) => {
-		setFormData(prev => ({ ...prev, [field]: value }));
-		
+		setFormData((prev) => ({ ...prev, [field]: value }));
+
 		// Regenerate case ID when workflow type changes
 		if (field === 'workflowTypeId') {
 			// Use setTimeout to ensure state is updated before generating new case ID
@@ -244,12 +254,20 @@ function NewCaseDialog({ open, onClose, onSuccess }: NewCaseDialogProps) {
 
 	return (
 		<LocalizationProvider dateAdapter={AdapterDateFns}>
-			<Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+			<Dialog
+				open={open}
+				onClose={onClose}
+				maxWidth="sm"
+				fullWidth
+			>
 				<form onSubmit={handleSubmit}>
 					<DialogTitle>Create New Onboarding Case</DialogTitle>
 					<DialogContent>
 						{error && (
-							<Alert severity="error" className="mb-16">
+							<Alert
+								severity="error"
+								className="mb-16"
+							>
 								{error}
 							</Alert>
 						)}
@@ -265,7 +283,11 @@ function NewCaseDialog({ open, onClose, onSuccess }: NewCaseDialogProps) {
 									size="small"
 									className="flex-1"
 								/>
-								<FormControl size="small" className="min-w-120" required>
+								<FormControl
+									size="small"
+									className="min-w-120"
+									required
+								>
 									<InputLabel>Priority</InputLabel>
 									<Select
 										value={formData.priority}
@@ -281,7 +303,11 @@ function NewCaseDialog({ open, onClose, onSuccess }: NewCaseDialogProps) {
 							</Box>
 
 							{/* Workflow Type */}
-							<FormControl fullWidth size="small" required>
+							<FormControl
+								fullWidth
+								size="small"
+								required
+							>
 								<InputLabel>Workflow Type</InputLabel>
 								<Select
 									value={formData.workflowTypeId}
@@ -289,7 +315,10 @@ function NewCaseDialog({ open, onClose, onSuccess }: NewCaseDialogProps) {
 									label="Workflow Type"
 								>
 									{workflowTypes.map((workflowType) => (
-										<MenuItem key={workflowType._id} value={workflowType._id}>
+										<MenuItem
+											key={workflowType._id}
+											value={workflowType._id}
+										>
 											{workflowType.name} - {workflowType.prefix}
 										</MenuItem>
 									))}
@@ -297,7 +326,11 @@ function NewCaseDialog({ open, onClose, onSuccess }: NewCaseDialogProps) {
 							</FormControl>
 
 							{/* Client */}
-							<FormControl fullWidth size="small" required>
+							<FormControl
+								fullWidth
+								size="small"
+								required
+							>
 								<InputLabel>Client</InputLabel>
 								<Select
 									value={formData.clientId}
@@ -305,7 +338,10 @@ function NewCaseDialog({ open, onClose, onSuccess }: NewCaseDialogProps) {
 									label="Client"
 								>
 									{clients.map((client) => (
-										<MenuItem key={client._id} value={client._id}>
+										<MenuItem
+											key={client._id}
+											value={client._id}
+										>
 											{client.name} - {client.email}
 										</MenuItem>
 									))}
@@ -313,7 +349,11 @@ function NewCaseDialog({ open, onClose, onSuccess }: NewCaseDialogProps) {
 							</FormControl>
 
 							{/* Assigned Champion */}
-							<FormControl fullWidth size="small" required>
+							<FormControl
+								fullWidth
+								size="small"
+								required
+							>
 								<InputLabel>Assigned Champion</InputLabel>
 								<Select
 									value={formData.assignedChampion}
@@ -321,7 +361,10 @@ function NewCaseDialog({ open, onClose, onSuccess }: NewCaseDialogProps) {
 									label="Assigned Champion"
 								>
 									{champions.map((champion) => (
-										<MenuItem key={champion.id} value={champion.id}>
+										<MenuItem
+											key={champion.id}
+											value={champion.id}
+										>
 											{champion.firstName} {champion.lastName} ({champion.role})
 										</MenuItem>
 									))}
@@ -378,12 +421,15 @@ function NewCaseDialog({ open, onClose, onSuccess }: NewCaseDialogProps) {
 						</Box>
 					</DialogContent>
 					<DialogActions>
-						<Button onClick={onClose} disabled={loading}>
+						<Button
+							onClick={onClose}
+							disabled={loading}
+						>
 							Cancel
 						</Button>
-						<Button 
-							type="submit" 
-							variant="contained" 
+						<Button
+							type="submit"
+							variant="contained"
 							disabled={loading}
 							startIcon={loading ? <CircularProgress size={16} /> : null}
 						>

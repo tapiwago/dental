@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
 	Dialog,
 	DialogTitle,
@@ -45,7 +45,7 @@ function AddTaskDialog({ open, onClose, onSuccess, caseId, stageId }: AddTaskDia
 	const { data: user } = useUser();
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState('');
-	
+
 	// Form fields
 	const [name, setName] = useState('');
 	const [description, setDescription] = useState('');
@@ -55,7 +55,7 @@ function AddTaskDialog({ open, onClose, onSuccess, caseId, stageId }: AddTaskDia
 	const [assignedTo, setAssignedTo] = useState('');
 	const [isRequired, setIsRequired] = useState(false);
 	const [dueDate, setDueDate] = useState('');
-	
+
 	// Data
 	const [stages, setStages] = useState<Stage[]>([]);
 	const [users, setUsers] = useState<User[]>([]);
@@ -73,7 +73,7 @@ function AddTaskDialog({ open, onClose, onSuccess, caseId, stageId }: AddTaskDia
 			params.append('onboardingCaseId', caseId);
 			const response = await stageApi.getAll(params);
 			const data = await fetchJson(response);
-			
+
 			if (Array.isArray(data)) {
 				setStages(data);
 			} else if (data.stages) {
@@ -88,7 +88,7 @@ function AddTaskDialog({ open, onClose, onSuccess, caseId, stageId }: AddTaskDia
 		try {
 			const response = await userApi.getAll();
 			const data = await fetchJson(response);
-			
+
 			if (Array.isArray(data)) {
 				setUsers(data);
 			} else if (data.users) {
@@ -104,14 +104,17 @@ function AddTaskDialog({ open, onClose, onSuccess, caseId, stageId }: AddTaskDia
 			setError('Task name is required');
 			return false;
 		}
+
 		if (!selectedStageId) {
 			setError('Stage selection is required');
 			return false;
 		}
+
 		if (!user?.id) {
 			setError('User information not available');
 			return false;
 		}
+
 		return true;
 	};
 
@@ -168,15 +171,27 @@ function AddTaskDialog({ open, onClose, onSuccess, caseId, stageId }: AddTaskDia
 	};
 
 	return (
-		<Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+		<Dialog
+			open={open}
+			onClose={handleClose}
+			maxWidth="md"
+			fullWidth
+		>
 			<DialogTitle>Add New Task</DialogTitle>
 			<DialogContent>
-				<Typography variant="body2" color="text.secondary" className="mb-16">
+				<Typography
+					variant="body2"
+					color="text.secondary"
+					className="mb-16"
+				>
 					Add a new task to the onboarding case.
 				</Typography>
 
 				{error && (
-					<Alert severity="error" className="mb-16">
+					<Alert
+						severity="error"
+						className="mb-16"
+					>
 						{error}
 					</Alert>
 				)}
@@ -200,7 +215,10 @@ function AddTaskDialog({ open, onClose, onSuccess, caseId, stageId }: AddTaskDia
 					/>
 
 					<Box className="grid grid-cols-2 gap-16">
-						<FormControl fullWidth required>
+						<FormControl
+							fullWidth
+							required
+						>
 							<InputLabel>Stage</InputLabel>
 							<Select
 								value={selectedStageId}
@@ -208,7 +226,10 @@ function AddTaskDialog({ open, onClose, onSuccess, caseId, stageId }: AddTaskDia
 								label="Stage"
 							>
 								{stages.map((stage) => (
-									<MenuItem key={stage._id} value={stage._id}>
+									<MenuItem
+										key={stage._id}
+										value={stage._id}
+									>
 										{stage.sequence}. {stage.name}
 									</MenuItem>
 								))}
@@ -259,7 +280,10 @@ function AddTaskDialog({ open, onClose, onSuccess, caseId, stageId }: AddTaskDia
 								<em>Assign to current user (champion)</em>
 							</MenuItem>
 							{users.map((u) => (
-								<MenuItem key={u._id} value={u._id}>
+								<MenuItem
+									key={u._id}
+									value={u._id}
+								>
 									{u.firstName} {u.lastName} ({u.email})
 								</MenuItem>
 							))}
@@ -276,26 +300,52 @@ function AddTaskDialog({ open, onClose, onSuccess, caseId, stageId }: AddTaskDia
 							}
 							label="Required Task"
 						/>
-						<Typography variant="caption" color="text.secondary" className="block mt-4">
+						<Typography
+							variant="caption"
+							color="text.secondary"
+							className="block mt-4"
+						>
 							Whether this task must be completed to proceed
 						</Typography>
 					</Box>
 
 					<Box>
-						<Typography variant="body2" className="mb-8">
+						<Typography
+							variant="body2"
+							className="mb-8"
+						>
 							Priority Information:
 						</Typography>
 						<Box className="flex gap-8">
-							<Chip label="Low" color="success" size="small" />
-							<Chip label="Medium" color="info" size="small" />
-							<Chip label="High" color="warning" size="small" />
-							<Chip label="Critical" color="error" size="small" />
+							<Chip
+								label="Low"
+								color="success"
+								size="small"
+							/>
+							<Chip
+								label="Medium"
+								color="info"
+								size="small"
+							/>
+							<Chip
+								label="High"
+								color="warning"
+								size="small"
+							/>
+							<Chip
+								label="Critical"
+								color="error"
+								size="small"
+							/>
 						</Box>
 					</Box>
 				</Box>
 			</DialogContent>
 			<DialogActions>
-				<Button onClick={handleClose} disabled={loading}>
+				<Button
+					onClick={handleClose}
+					disabled={loading}
+				>
 					Cancel
 				</Button>
 				<Button

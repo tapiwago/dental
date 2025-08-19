@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
 	Typography,
-	Paper,
 	Box,
 	Button,
 	TextField,
@@ -9,8 +8,6 @@ import {
 	InputLabel,
 	Select,
 	MenuItem,
-	Card,
-	CardContent,
 	CircularProgress,
 	Alert,
 	Chip,
@@ -118,6 +115,7 @@ function TemplateEdit() {
 		if (!name.trim()) {
 			newErrors.name = 'Name is required';
 		}
+
 		if (!type) {
 			newErrors.type = 'Type is required';
 		}
@@ -128,7 +126,7 @@ function TemplateEdit() {
 
 	const clearFieldError = (fieldName: string) => {
 		if (errors[fieldName]) {
-			setErrors(prev => {
+			setErrors((prev) => {
 				const newErrors = { ...prev };
 				delete newErrors[fieldName];
 				return newErrors;
@@ -140,17 +138,22 @@ function TemplateEdit() {
 		if (!validateForm()) {
 			// Get specific validation errors to show in the message
 			const errorFields = [];
+
 			if (!name.trim()) errorFields.push('Template Name');
+
 			if (!type) errorFields.push('Type');
 
-			const errorMessage = errorFields.length > 0 
-				? `Please fix the following fields: ${errorFields.join(', ')}`
-				: 'Please fill in all required fields';
+			const errorMessage =
+				errorFields.length > 0
+					? `Please fix the following fields: ${errorFields.join(', ')}`
+					: 'Please fill in all required fields';
 
-			dispatch(showMessage({ 
-				message: errorMessage, 
-				variant: 'error' 
-			}));
+			dispatch(
+				showMessage({
+					message: errorMessage,
+					variant: 'error'
+				})
+			);
 			return;
 		}
 
@@ -170,8 +173,8 @@ function TemplateEdit() {
 				version,
 				estimatedDuration: estimatedDuration ? parseInt(estimatedDuration) : undefined,
 				estimatedCost: estimatedCost ? parseFloat(estimatedCost) : undefined,
-				tags: tags.filter(tag => tag.trim()),
-				categories: categories.filter(cat => cat.trim()),
+				tags: tags.filter((tag) => tag.trim()),
+				categories: categories.filter((cat) => cat.trim()),
 				isDefault,
 				// Only include lastModifiedBy if user is available
 				...(user?._id && { lastModifiedBy: user._id })
@@ -181,25 +184,31 @@ function TemplateEdit() {
 			const data = await fetchJson(response);
 
 			if (data._id) {
-				dispatch(showMessage({ 
-					message: 'Template updated successfully!', 
-					variant: 'success' 
-				}));
+				dispatch(
+					showMessage({
+						message: 'Template updated successfully!',
+						variant: 'success'
+					})
+				);
 				navigate(`/workflow-templates/template/${id}`);
 			} else {
-				dispatch(showMessage({ 
-					message: data.error || 'Failed to update template', 
-					variant: 'error' 
-				}));
+				dispatch(
+					showMessage({
+						message: data.error || 'Failed to update template',
+						variant: 'error'
+					})
+				);
 				setErrors({ submit: data.error || 'Failed to update template' });
 			}
 		} catch (error: any) {
 			console.error('Error updating template:', error);
 			const errorMessage = error.data?.error || error.message || 'Failed to update template. Please try again.';
-			dispatch(showMessage({ 
-				message: errorMessage, 
-				variant: 'error' 
-			}));
+			dispatch(
+				showMessage({
+					message: errorMessage,
+					variant: 'error'
+				})
+			);
 			setErrors({ submit: errorMessage });
 		} finally {
 			setSaving(false);
@@ -218,7 +227,7 @@ function TemplateEdit() {
 	};
 
 	const handleRemoveTag = (tagToRemove: string) => {
-		setTags(tags.filter(tag => tag !== tagToRemove));
+		setTags(tags.filter((tag) => tag !== tagToRemove));
 	};
 
 	const handleAddCategory = () => {
@@ -229,7 +238,7 @@ function TemplateEdit() {
 	};
 
 	const handleRemoveCategory = (categoryToRemove: string) => {
-		setCategories(categories.filter(cat => cat !== categoryToRemove));
+		setCategories(categories.filter((cat) => cat !== categoryToRemove));
 	};
 
 	const handleKeyPress = (event: React.KeyboardEvent, action: () => void) => {
@@ -250,7 +259,10 @@ function TemplateEdit() {
 	if (error) {
 		return (
 			<Box className="p-24">
-				<Alert severity="error" className="mb-16">
+				<Alert
+					severity="error"
+					className="mb-16"
+				>
 					{error}
 				</Alert>
 				<Button
@@ -270,10 +282,16 @@ function TemplateEdit() {
 			<Box className="mb-5">
 				<Box className="flex items-center justify-between">
 					<div>
-						<Typography variant="h4" className="font-bold">
+						<Typography
+							variant="h4"
+							className="font-bold"
+						>
 							Edit Template: {name}
 						</Typography>
-						<Typography variant="body1" color="text.secondary">
+						<Typography
+							variant="body1"
+							color="text.secondary"
+						>
 							Template ID: {templateId}
 						</Typography>
 					</div>
@@ -300,7 +318,12 @@ function TemplateEdit() {
 			<Divider className="mb-5" />
 			{/* Basic Information */}
 			<Box className="mb-5">
-				<Typography variant="h6" className="mb-5">Basic Information</Typography>
+				<Typography
+					variant="h6"
+					className="mb-5"
+				>
+					Basic Information
+				</Typography>
 				<Box className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
 					<TextField
 						label="Template Name"
@@ -314,7 +337,11 @@ function TemplateEdit() {
 						fullWidth
 						required
 					/>
-					<FormControl fullWidth required error={!!errors.type}>
+					<FormControl
+						fullWidth
+						required
+						error={!!errors.type}
+					>
 						<InputLabel>Type</InputLabel>
 						<Select
 							value={type}
@@ -330,7 +357,11 @@ function TemplateEdit() {
 							<MenuItem value="WorkflowGuide">Workflow Guide</MenuItem>
 						</Select>
 						{errors.type && (
-							<Typography variant="caption" color="error" className="mt-1">
+							<Typography
+								variant="caption"
+								color="error"
+								className="mt-1"
+							>
 								{errors.type}
 							</Typography>
 						)}
@@ -342,7 +373,7 @@ function TemplateEdit() {
 					fullWidth
 					className="mb-5"
 					InputProps={{
-						readOnly: true,
+						readOnly: true
 					}}
 					helperText="Template ID cannot be modified"
 				/>
@@ -360,7 +391,12 @@ function TemplateEdit() {
 
 			{/* Classification */}
 			<Box className="mb-5">
-				<Typography variant="h6" className="mb-5">Classification</Typography>
+				<Typography
+					variant="h6"
+					className="mb-5"
+				>
+					Classification
+				</Typography>
 				<Box className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-5">
 					<FormControl fullWidth>
 						<InputLabel>Industry Type</InputLabel>
@@ -420,7 +456,12 @@ function TemplateEdit() {
 
 			{/* Estimates and Version */}
 			<Box className="mb-5">
-				<Typography variant="h6" className="mb-5">Estimates & Version</Typography>
+				<Typography
+					variant="h6"
+					className="mb-5"
+				>
+					Estimates & Version
+				</Typography>
 				<Box className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5">
 					<TextField
 						label="Version"
@@ -448,11 +489,21 @@ function TemplateEdit() {
 
 			{/* Tags and Categories */}
 			<Box className="mb-5">
-				<Typography variant="h6" className="mb-5">Tags & Categories</Typography>
-				
+				<Typography
+					variant="h6"
+					className="mb-5"
+				>
+					Tags & Categories
+				</Typography>
+
 				{/* Tags */}
 				<Box className="mb-5">
-					<Typography variant="subtitle1" className="mb-3">Tags</Typography>
+					<Typography
+						variant="subtitle1"
+						className="mb-3"
+					>
+						Tags
+					</Typography>
 					<Box className="flex gap-2 mb-2">
 						<TextField
 							label="Add Tag"
@@ -462,7 +513,11 @@ function TemplateEdit() {
 							size="small"
 							className="flex-1"
 						/>
-						<Button onClick={handleAddTag} variant="outlined" size="small">
+						<Button
+							onClick={handleAddTag}
+							variant="outlined"
+							size="small"
+						>
 							Add
 						</Button>
 					</Box>
@@ -482,7 +537,12 @@ function TemplateEdit() {
 
 				{/* Categories */}
 				<Box className="mb-5">
-					<Typography variant="subtitle1" className="mb-3">Categories</Typography>
+					<Typography
+						variant="subtitle1"
+						className="mb-3"
+					>
+						Categories
+					</Typography>
 					<Box className="flex gap-2 mb-2">
 						<TextField
 							label="Add Category"
@@ -492,7 +552,11 @@ function TemplateEdit() {
 							size="small"
 							className="flex-1"
 						/>
-						<Button onClick={handleAddCategory} variant="outlined" size="small">
+						<Button
+							onClick={handleAddCategory}
+							variant="outlined"
+							size="small"
+						>
 							Add
 						</Button>
 					</Box>
@@ -514,7 +578,12 @@ function TemplateEdit() {
 
 			{/* Options */}
 			<Box className="mb-5">
-				<Typography variant="h6" className="mb-5">Options</Typography>
+				<Typography
+					variant="h6"
+					className="mb-5"
+				>
+					Options
+				</Typography>
 				<FormControlLabel
 					control={
 						<Switch
@@ -526,11 +595,7 @@ function TemplateEdit() {
 				/>
 			</Box>
 
-			{errors.submit && (
-				<Alert severity="error">
-					{errors.submit}
-				</Alert>
-			)}
+			{errors.submit && <Alert severity="error">{errors.submit}</Alert>}
 		</div>
 	);
 }

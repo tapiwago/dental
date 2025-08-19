@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
 	Dialog,
 	DialogTitle,
@@ -6,10 +6,6 @@ import {
 	DialogActions,
 	Button,
 	Typography,
-	FormControl,
-	InputLabel,
-	Select,
-	MenuItem,
 	Box,
 	List,
 	ListItem,
@@ -50,41 +46,41 @@ interface Template {
 	description?: string;
 	type: 'OnboardingCase' | 'Stage' | 'Task' | 'WorkflowGuide';
 	configuration: {
-		defaultStages?: Array<{
+		defaultStages?: {
 			name: string;
 			sequence: number;
 			description?: string;
 			estimatedDuration?: number;
 			isRequired: boolean;
-			tasks?: Array<{
+			tasks?: {
 				name: string;
 				description?: string;
 				estimatedHours?: number;
 				isRequired: boolean;
 				priority: string;
 				skillsRequired: string[];
-			}>;
-		}>;
+			}[];
+		}[];
 	};
 	tags: string[];
 	industryType: string;
 	complexity: string;
 }
 
-function ImportTemplateDialog({ 
-	open, 
-	onClose, 
-	onSuccess, 
-	caseId, 
+function ImportTemplateDialog({
+	open,
+	onClose,
+	onSuccess,
+	caseId,
 	existingStageId,
-	importType 
+	importType
 }: ImportTemplateDialogProps) {
 	const { data: user } = useUser();
 	const [loading, setLoading] = useState(false);
 	const [importing, setImporting] = useState(false);
 	const [error, setError] = useState('');
 	const [currentTab, setCurrentTab] = useState(0);
-	
+
 	// Template selection
 	const [templates, setTemplates] = useState<Template[]>([]);
 	const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
@@ -101,11 +97,11 @@ function ImportTemplateDialog({
 		try {
 			setLoading(true);
 			setError('');
-			
+
 			// Filter templates based on import type
-			const templateType = importType === 'workflow' ? 'OnboardingCase' : 
-							   importType === 'stage' ? 'Stage' : 'Task';
-			
+			const templateType =
+				importType === 'workflow' ? 'OnboardingCase' : importType === 'stage' ? 'Stage' : 'Task';
+
 			const params = new URLSearchParams({
 				type: templateType,
 				status: 'Published'
@@ -136,20 +132,14 @@ function ImportTemplateDialog({
 
 	const handleStageToggle = (stageIndex: number) => {
 		const stageKey = `stage-${stageIndex}`;
-		setSelectedStages(prev => 
-			prev.includes(stageKey) 
-				? prev.filter(s => s !== stageKey)
-				: [...prev, stageKey]
+		setSelectedStages((prev) =>
+			prev.includes(stageKey) ? prev.filter((s) => s !== stageKey) : [...prev, stageKey]
 		);
 	};
 
 	const handleTaskToggle = (stageIndex: number, taskIndex: number) => {
 		const taskKey = `task-${stageIndex}-${taskIndex}`;
-		setSelectedTasks(prev => 
-			prev.includes(taskKey) 
-				? prev.filter(t => t !== taskKey)
-				: [...prev, taskKey]
-		);
+		setSelectedTasks((prev) => (prev.includes(taskKey) ? prev.filter((t) => t !== taskKey) : [...prev, taskKey]));
 	};
 
 	const handleImport = async () => {
@@ -189,10 +179,12 @@ function ImportTemplateDialog({
 		const existingStagesResponse = await stageApi.getAll(params);
 		const existingStagesData = await fetchJson(existingStagesResponse);
 		const existingStages = Array.isArray(existingStagesData) ? existingStagesData : existingStagesData.stages || [];
-		const maxSequence = existingStages.length > 0 ? Math.max(...existingStages.map((s: any) => s.sequence || 0)) : 0;
+		const maxSequence =
+			existingStages.length > 0 ? Math.max(...existingStages.map((s: any) => s.sequence || 0)) : 0;
 
 		for (const [index, stage] of selectedTemplate.configuration.defaultStages.entries()) {
 			const stageKey = `stage-${index}`;
+
 			if (!selectedStages.includes(stageKey)) continue;
 
 			// Create stage
@@ -214,6 +206,7 @@ function ImportTemplateDialog({
 			if (stage.tasks) {
 				for (const [taskIndex, task] of stage.tasks.entries()) {
 					const taskKey = `task-${index}-${taskIndex}`;
+
 					if (!selectedTasks.includes(taskKey)) continue;
 
 					const taskData = {
@@ -244,10 +237,12 @@ function ImportTemplateDialog({
 		const existingStagesResponse = await stageApi.getAll(params);
 		const existingStagesData = await fetchJson(existingStagesResponse);
 		const existingStages = Array.isArray(existingStagesData) ? existingStagesData : existingStagesData.stages || [];
-		const maxSequence = existingStages.length > 0 ? Math.max(...existingStages.map((s: any) => s.sequence || 0)) : 0;
+		const maxSequence =
+			existingStages.length > 0 ? Math.max(...existingStages.map((s: any) => s.sequence || 0)) : 0;
 
 		for (const [index, stage] of selectedTemplate.configuration.defaultStages.entries()) {
 			const stageKey = `stage-${index}`;
+
 			if (!selectedStages.includes(stageKey)) continue;
 
 			const stageData = {
@@ -268,6 +263,7 @@ function ImportTemplateDialog({
 			if (stage.tasks) {
 				for (const [taskIndex, task] of stage.tasks.entries()) {
 					const taskKey = `task-${index}-${taskIndex}`;
+
 					if (!selectedTasks.includes(taskKey)) continue;
 
 					const taskData = {
@@ -297,6 +293,7 @@ function ImportTemplateDialog({
 
 			for (const [taskIndex, task] of stage.tasks.entries()) {
 				const taskKey = `task-${stageIndex}-${taskIndex}`;
+
 				if (!selectedTasks.includes(taskKey)) continue;
 
 				const taskData = {
@@ -319,24 +316,37 @@ function ImportTemplateDialog({
 
 	const getImportTitle = () => {
 		switch (importType) {
-			case 'workflow': return 'Import Workflow Template';
-			case 'stage': return 'Import Stage Template';
-			case 'task': return 'Import Task Template';
-			default: return 'Import Template';
+			case 'workflow':
+				return 'Import Workflow Template';
+			case 'stage':
+				return 'Import Stage Template';
+			case 'task':
+				return 'Import Task Template';
+			default:
+				return 'Import Template';
 		}
 	};
 
 	const getImportDescription = () => {
 		switch (importType) {
-			case 'workflow': return 'Select a workflow template to import all stages and tasks';
-			case 'stage': return 'Select a stage template to import stages and their tasks';
-			case 'task': return 'Select a template to import tasks into the current stage';
-			default: return 'Select a template to import';
+			case 'workflow':
+				return 'Select a workflow template to import all stages and tasks';
+			case 'stage':
+				return 'Select a stage template to import stages and their tasks';
+			case 'task':
+				return 'Select a template to import tasks into the current stage';
+			default:
+				return 'Select a template to import';
 		}
 	};
 
 	return (
-		<Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+		<Dialog
+			open={open}
+			onClose={onClose}
+			maxWidth="md"
+			fullWidth
+		>
 			<DialogTitle>
 				<Box className="flex items-center gap-8">
 					{importType === 'workflow' && <WorkflowIcon />}
@@ -346,19 +356,32 @@ function ImportTemplateDialog({
 				</Box>
 			</DialogTitle>
 			<DialogContent>
-				<Typography variant="body2" color="text.secondary" className="mb-16">
+				<Typography
+					variant="body2"
+					color="text.secondary"
+					className="mb-16"
+				>
 					{getImportDescription()}
 				</Typography>
 
 				{error && (
-					<Alert severity="error" className="mb-16">
+					<Alert
+						severity="error"
+						className="mb-16"
+					>
 						{error}
 					</Alert>
 				)}
 
-				<Tabs value={currentTab} onChange={(_, newValue) => setCurrentTab(newValue)}>
+				<Tabs
+					value={currentTab}
+					onChange={(_, newValue) => setCurrentTab(newValue)}
+				>
 					<Tab label="Select Template" />
-					<Tab label="Configure Import" disabled={!selectedTemplate} />
+					<Tab
+						label="Configure Import"
+						disabled={!selectedTemplate}
+					/>
 				</Tabs>
 
 				{/* Template Selection Tab */}
@@ -369,9 +392,7 @@ function ImportTemplateDialog({
 								<CircularProgress />
 							</Box>
 						) : templates.length === 0 ? (
-							<Alert severity="info">
-								No published templates found for {importType} import.
-							</Alert>
+							<Alert severity="info">No published templates found for {importType} import.</Alert>
 						) : (
 							<List>
 								{templates.map((template) => (
@@ -384,14 +405,23 @@ function ImportTemplateDialog({
 											primary={template.name}
 											secondary={
 												<Box>
-													<Typography variant="body2">
-														{template.description}
-													</Typography>
+													<Typography variant="body2">{template.description}</Typography>
 													<Box className="flex gap-4 mt-4">
-														<Chip label={template.industryType} size="small" />
-														<Chip label={template.complexity} size="small" />
+														<Chip
+															label={template.industryType}
+															size="small"
+														/>
+														<Chip
+															label={template.complexity}
+															size="small"
+														/>
 														{template.tags.slice(0, 3).map((tag, index) => (
-															<Chip key={index} label={tag} size="small" variant="outlined" />
+															<Chip
+																key={index}
+																label={tag}
+																size="small"
+																variant="outlined"
+															/>
 														))}
 													</Box>
 												</Box>
@@ -407,89 +437,131 @@ function ImportTemplateDialog({
 				{/* Configuration Tab */}
 				{currentTab === 1 && selectedTemplate && (
 					<Box className="mt-16">
-						<Typography variant="h6" className="mb-16">
+						<Typography
+							variant="h6"
+							className="mb-16"
+						>
 							Configure Import: {selectedTemplate.name}
 						</Typography>
 
-						{selectedTemplate.configuration.defaultStages && selectedTemplate.configuration.defaultStages.length > 0 && (
-							<Box>
-								<Typography variant="subtitle1" className="mb-8">
-									Select Stages and Tasks to Import
-								</Typography>
-								
-								{selectedTemplate.configuration.defaultStages.map((stage, stageIndex) => (
-									<Accordion key={stageIndex}>
-										<AccordionSummary expandIcon={<ExpandMoreIcon />}>
-											<Box className="flex items-center gap-8">
-												<Checkbox
-													checked={selectedStages.includes(`stage-${stageIndex}`)}
-													onChange={() => handleStageToggle(stageIndex)}
-													onClick={(e) => e.stopPropagation()}
-												/>
-												<Typography variant="subtitle2">
-													{stage.name}
-												</Typography>
-												{stage.isRequired && (
-													<Chip label="Required" size="small" color="error" />
-												)}
-											</Box>
-										</AccordionSummary>
-										<AccordionDetails>
-											<Box className="pl-32">
-												<Typography variant="body2" color="text.secondary" className="mb-8">
-													{stage.description}
-												</Typography>
-												
-												{stage.tasks && stage.tasks.length > 0 && (
-													<Box>
-														<Typography variant="subtitle2" className="mb-8">
-															Tasks ({stage.tasks.length})
-														</Typography>
-														<List dense>
-															{stage.tasks.map((task, taskIndex) => (
-																<ListItem key={taskIndex} className="pl-0">
-																	<ListItemIcon>
-																		<Checkbox
-																			checked={selectedTasks.includes(`task-${stageIndex}-${taskIndex}`)}
-																			onChange={() => handleTaskToggle(stageIndex, taskIndex)}
+						{selectedTemplate.configuration.defaultStages &&
+							selectedTemplate.configuration.defaultStages.length > 0 && (
+								<Box>
+									<Typography
+										variant="subtitle1"
+										className="mb-8"
+									>
+										Select Stages and Tasks to Import
+									</Typography>
+
+									{selectedTemplate.configuration.defaultStages.map((stage, stageIndex) => (
+										<Accordion key={stageIndex}>
+											<AccordionSummary expandIcon={<ExpandMoreIcon />}>
+												<Box className="flex items-center gap-8">
+													<Checkbox
+														checked={selectedStages.includes(`stage-${stageIndex}`)}
+														onChange={() => handleStageToggle(stageIndex)}
+														onClick={(e) => e.stopPropagation()}
+													/>
+													<Typography variant="subtitle2">{stage.name}</Typography>
+													{stage.isRequired && (
+														<Chip
+															label="Required"
+															size="small"
+															color="error"
+														/>
+													)}
+												</Box>
+											</AccordionSummary>
+											<AccordionDetails>
+												<Box className="pl-32">
+													<Typography
+														variant="body2"
+														color="text.secondary"
+														className="mb-8"
+													>
+														{stage.description}
+													</Typography>
+
+													{stage.tasks && stage.tasks.length > 0 && (
+														<Box>
+															<Typography
+																variant="subtitle2"
+																className="mb-8"
+															>
+																Tasks ({stage.tasks.length})
+															</Typography>
+															<List dense>
+																{stage.tasks.map((task, taskIndex) => (
+																	<ListItem
+																		key={taskIndex}
+																		className="pl-0"
+																	>
+																		<ListItemIcon>
+																			<Checkbox
+																				checked={selectedTasks.includes(
+																					`task-${stageIndex}-${taskIndex}`
+																				)}
+																				onChange={() =>
+																					handleTaskToggle(
+																						stageIndex,
+																						taskIndex
+																					)
+																				}
+																			/>
+																		</ListItemIcon>
+																		<ListItemText
+																			primary={task.name}
+																			secondary={
+																				<Box className="flex gap-4 mt-4">
+																					<Chip
+																						label={task.priority}
+																						size="small"
+																					/>
+																					{task.isRequired && (
+																						<Chip
+																							label="Required"
+																							size="small"
+																							color="error"
+																						/>
+																					)}
+																					{task.estimatedHours && (
+																						<Chip
+																							label={`${task.estimatedHours}h`}
+																							size="small"
+																							variant="outlined"
+																						/>
+																					)}
+																				</Box>
+																			}
 																		/>
-																	</ListItemIcon>
-																	<ListItemText
-																		primary={task.name}
-																		secondary={
-																			<Box className="flex gap-4 mt-4">
-																				<Chip label={task.priority} size="small" />
-																				{task.isRequired && (
-																					<Chip label="Required" size="small" color="error" />
-																				)}
-																				{task.estimatedHours && (
-																					<Chip label={`${task.estimatedHours}h`} size="small" variant="outlined" />
-																				)}
-																			</Box>
-																		}
-																	/>
-																</ListItem>
-															))}
-														</List>
-													</Box>
-												)}
-											</Box>
-										</AccordionDetails>
-									</Accordion>
-								))}
-							</Box>
-						)}
+																	</ListItem>
+																))}
+															</List>
+														</Box>
+													)}
+												</Box>
+											</AccordionDetails>
+										</Accordion>
+									))}
+								</Box>
+							)}
 					</Box>
 				)}
 			</DialogContent>
 			<DialogActions>
-				<Button onClick={onClose} disabled={importing}>
+				<Button
+					onClick={onClose}
+					disabled={importing}
+				>
 					Cancel
 				</Button>
 				<Button
 					onClick={handleImport}
 					variant="contained"
-					disabled={importing || !selectedTemplate || (selectedStages.length === 0 && selectedTasks.length === 0)}
+					disabled={
+						importing || !selectedTemplate || (selectedStages.length === 0 && selectedTasks.length === 0)
+					}
 				>
 					{importing ? 'Importing...' : 'Import Selected'}
 				</Button>

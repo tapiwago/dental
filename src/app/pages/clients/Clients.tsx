@@ -89,30 +89,30 @@ function Clients() {
 
 	const getStatusColor = (status: string) => {
 		const colors = {
-			'Prospect': 'info',
-			'Active': 'success',
-			'Inactive': 'warning',
-			'Churned': 'error'
+			Prospect: 'info',
+			Active: 'success',
+			Inactive: 'warning',
+			Churned: 'error'
 		};
 		return colors[status as keyof typeof colors] || 'default';
 	};
 
 	const getPriorityColor = (priority: string) => {
 		const colors = {
-			'Low': 'success',
-			'Medium': 'info',
-			'High': 'warning',
-			'Critical': 'error'
+			Low: 'success',
+			Medium: 'info',
+			High: 'warning',
+			Critical: 'error'
 		};
 		return colors[priority as keyof typeof colors] || 'default';
 	};
 
 	const getIndustryColor = (industry: string) => {
 		const colors = {
-			'Dental': 'primary',
-			'Medical': 'secondary',
-			'Veterinary': 'info',
-			'Other': 'default'
+			Dental: 'primary',
+			Medical: 'secondary',
+			Veterinary: 'info',
+			Other: 'default'
 		};
 		return colors[industry as keyof typeof colors] || 'default';
 	};
@@ -131,24 +131,22 @@ function Clients() {
 	};
 
 	// Filter clients based on search and filters
-	const filteredClients = clients.filter(client => {
-		const matchesSearch = searchTerm === '' || 
+	const filteredClients = clients.filter((client) => {
+		const matchesSearch =
+			searchTerm === '' ||
 			client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
 			client.contactInfo.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
 			client.location.toLowerCase().includes(searchTerm.toLowerCase());
-		
+
 		const matchesStatus = statusFilter === '' || client.status === statusFilter;
 		const matchesPriority = priorityFilter === '' || client.priority === priorityFilter;
 		const matchesIndustry = industryFilter === '' || client.industryType === industryFilter;
-		
+
 		return matchesSearch && matchesStatus && matchesPriority && matchesIndustry;
 	});
 
 	// Paginate filtered clients
-	const paginatedClients = filteredClients.slice(
-		page * rowsPerPage,
-		page * rowsPerPage + rowsPerPage
-	);
+	const paginatedClients = filteredClients.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
 	return (
 		<>
@@ -164,7 +162,10 @@ function Clients() {
 							className="min-w-50"
 							size="small"
 						/>
-						<FormControl className="min-w-50" size="small">
+						<FormControl
+							className="min-w-50"
+							size="small"
+						>
 							<InputLabel>Status</InputLabel>
 							<Select
 								value={statusFilter}
@@ -178,7 +179,10 @@ function Clients() {
 								<MenuItem value="Churned">Churned</MenuItem>
 							</Select>
 						</FormControl>
-						<FormControl className="min-w-50" size="small">
+						<FormControl
+							className="min-w-50"
+							size="small"
+						>
 							<InputLabel>Priority</InputLabel>
 							<Select
 								value={priorityFilter}
@@ -192,7 +196,10 @@ function Clients() {
 								<MenuItem value="Critical">Critical</MenuItem>
 							</Select>
 						</FormControl>
-						<FormControl className="min-w-50" size="small">
+						<FormControl
+							className="min-w-50"
+							size="small"
+						>
 							<InputLabel>Industry</InputLabel>
 							<Select
 								value={industryFilter}
@@ -236,45 +243,52 @@ function Clients() {
 								<TableBody>
 									{loading ? (
 										<TableRow>
-											<TableCell colSpan={8} align="center">
+											<TableCell
+												colSpan={8}
+												align="center"
+											>
 												<CircularProgress />
 											</TableCell>
 										</TableRow>
 									) : paginatedClients.length === 0 ? (
 										<TableRow>
-											<TableCell colSpan={8} align="center">
-												<Typography color="text.secondary">
-													No clients found
-												</Typography>
+											<TableCell
+												colSpan={8}
+												align="center"
+											>
+												<Typography color="text.secondary">No clients found</Typography>
 											</TableCell>
 										</TableRow>
 									) : (
 										paginatedClients.map((client) => (
-											<TableRow key={client._id} hover>
+											<TableRow
+												key={client._id}
+												hover
+											>
 												<TableCell>
-													<Typography variant="body2" className="font-medium">
+													<Typography
+														variant="body2"
+														className="font-medium"
+													>
 														{client.name}
 													</Typography>
 													{client.contactInfo.primaryContact && (
-														<Typography variant="caption" color="text.secondary">
+														<Typography
+															variant="caption"
+															color="text.secondary"
+														>
 															Contact: {client.contactInfo.primaryContact}
 														</Typography>
 													)}
 												</TableCell>
 												<TableCell>
-													<Typography variant="body2">
-														{client.contactInfo.email}
-													</Typography>
+													<Typography variant="body2">{client.contactInfo.email}</Typography>
 												</TableCell>
 												<TableCell>
-													<Typography variant="body2">
-														{client.contactInfo.phone}
-													</Typography>
+													<Typography variant="body2">{client.contactInfo.phone}</Typography>
 												</TableCell>
 												<TableCell>
-													<Typography variant="body2">
-														{client.location}
-													</Typography>
+													<Typography variant="body2">{client.location}</Typography>
 												</TableCell>
 												<TableCell>
 													<Chip
